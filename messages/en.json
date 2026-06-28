@@ -1,0 +1,14 @@
+{
+  "nav": {
+    "brand": "TimiCY",
+    "switchLanguage": "Ελληνικά"
+  },
+  "home": {
+    "title": "Find the best price in Cyprus",
+    "tagline": "Compare prices on electronics and appliances from Cypriot stores.",
+    "searchPlaceholder": "Search for a product..."
+  },
+  "footer": {
+    "text": "TimiCY — Electronics price comparison in Cyprus"
+  }
+}
