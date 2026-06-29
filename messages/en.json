@@ -10,5 +10,16 @@
   },
   "footer": {
     "text": "TimiCY — Electronics price comparison in Cyprus"
+  },
+  "product": {
+    "bestPrice": "Best price",
+    "goToStore": "Go to store",
+    "outOfStock": "Out of stock",
+    "available": "Available",
+    "brand": "Brand",
+    "category": "Category",
+    "pricesFromStores": "Prices from {count} stores",
+    "noOffers": "No offers available for this product",
+    "metaDescription": "Compare prices for {title} across Cypriot stores. Find the best deal on TimiCY."
   }
 }

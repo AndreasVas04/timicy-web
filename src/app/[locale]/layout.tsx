@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale, getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -5,6 +6,14 @@ import { routing } from "@/i18n/routing";
 import { getTranslations } from "next-intl/server";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import "@/app/globals.css";
+
+/**
+ * Base metadata for the entire site. metadataBase is used by Next.js to resolve
+ * relative URLs in metadata (canonical, Open Graph, etc.) into absolute URLs.
+ */
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
+};
 
 /**
  * Root layout for all locale-prefixed routes.
