@@ -11,6 +11,20 @@
   "footer": {
     "text": "TimiCY — Σύγκριση τιμών ηλεκτρονικών στην Κύπρο"
   },
+  "category": {
+    "sortLabel": "Ταξινόμηση",
+    "sortPopular": "Δημοφιλή",
+    "sortPriceAsc": "Φθηνότερα πρώτα",
+    "sortPriceDesc": "Ακριβότερα πρώτα",
+    "fromPrice": "από {price}",
+    "inStores": "σε {count} καταστήματα",
+    "empty": "Δεν βρέθηκαν προϊόντα σε αυτήν την κατηγορία.",
+    "prev": "Προηγούμενη",
+    "next": "Επόμενη",
+    "pageOf": "Σελίδα {current} από {total}",
+    "metaDescription": "Σύγκρινε τιμές για {category} σε κυπριακά καταστήματα. Βρες τις καλύτερες προσφορές στο TimiCY.",
+    "browseCategories": "Κατηγορίες"
+  },
   "product": {
     "bestPrice": "Καλύτερη τιμή",
     "goToStore": "Μετάβαση στο κατάστημα",
