@@ -40,6 +40,13 @@
     "placeholder": "Search for a product...",
     "noResults": "No results found",
     "loading": "Searching…",
-    "fromPrice": "from {price}"
+    "fromPrice": "from {price}",
+    "resultsTitle": "Search results for \"{query}\"",
+    "resultsCount": "{total} results",
+    "noResultsFull": "No results found for \"{query}\"",
+    "minCharsPrompt": "Type at least 2 characters to search.",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {current} of {total}"
   }
 }

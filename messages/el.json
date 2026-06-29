@@ -40,6 +40,13 @@
     "placeholder": "Αναζήτηση προϊόντος...",
     "noResults": "Δεν βρέθηκαν αποτελέσματα",
     "loading": "Αναζήτηση…",
-    "fromPrice": "από {price}"
+    "fromPrice": "από {price}",
+    "resultsTitle": "Αποτελέσματα αναζήτησης για \"{query}\"",
+    "resultsCount": "{total} αποτελέσματα",
+    "noResultsFull": "Δεν βρέθηκαν αποτελέσματα για \"{query}\"",
+    "minCharsPrompt": "Πληκτρολογήστε τουλάχιστον 2 χαρακτήρες για αναζήτηση.",
+    "prev": "Προηγούμενη",
+    "next": "Επόμενη",
+    "pageOf": "Σελίδα {current} από {total}"
   }
 }

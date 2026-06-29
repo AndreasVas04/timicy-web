@@ -11,7 +11,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { buildProductSlug } from "@/lib/slug";
 
 /** Shape of a single search result from the API. */
@@ -26,6 +26,7 @@ interface SearchResult {
 
 export function SearchAutocomplete() {
   const t = useTranslations("search");
+  const router = useRouter();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -101,21 +102,27 @@ export function SearchAutocomplete() {
     }, 250);
   }
 
-  /** Keyboard navigation within the dropdown. */
+  /**
+   * Keyboard navigation within the dropdown.
+   *
+   * Enter behavior:
+   *  - If a result is highlighted (via ArrowDown/Up), navigate to that product.
+   *  - If NO result is highlighted, navigate to the full search results page
+   *    at /search?q=<query> (only when query >= 2 chars). This lets the user
+   *    press Enter immediately to see all results instead of picking from
+   *    the autocomplete dropdown.
+   */
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (!open || results.length === 0) {
-      // Allow Enter on closed dropdown to do nothing special.
-      return;
-    }
-
     switch (e.key) {
       case "ArrowDown":
+        if (!open || results.length === 0) return;
         e.preventDefault();
         setHighlightIndex((prev) =>
           prev < results.length - 1 ? prev + 1 : 0
         );
         break;
       case "ArrowUp":
+        if (!open || results.length === 0) return;
         e.preventDefault();
         setHighlightIndex((prev) =>
           prev > 0 ? prev - 1 : results.length - 1
@@ -123,16 +130,21 @@ export function SearchAutocomplete() {
         break;
       case "Enter":
         e.preventDefault();
-        {
-          // Navigate to the highlighted result, or the first one if none highlighted.
-          const idx = highlightIndex >= 0 ? highlightIndex : 0;
-          const result = results[idx];
+        if (open && results.length > 0 && highlightIndex >= 0) {
+          // A result is highlighted — navigate to that specific product.
+          const result = results[highlightIndex];
           if (result) {
-            // Programmatic navigation via the link click.
             const link = containerRef.current?.querySelector<HTMLAnchorElement>(
-              `[data-result-index="${idx}"]`
+              `[data-result-index="${highlightIndex}"]`
             );
             link?.click();
+          }
+        } else {
+          // No highlight — navigate to the full search results page.
+          const trimmed = query.trim();
+          if (trimmed.length >= 2) {
+            setOpen(false);
+            router.push(`/search?q=${encodeURIComponent(trimmed)}`);
           }
         }
         break;
