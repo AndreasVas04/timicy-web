@@ -1,7 +1,9 @@
 {
   "nav": {
     "brand": "TimiCY",
-    "switchLanguage": "Ελληνικά"
+    "switchLanguage": "Ελληνικά",
+    "categories": "Categories",
+    "searchToggle": "Search"
   },
   "home": {
     "title": "Find the best price in Cyprus",

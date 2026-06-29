@@ -4,7 +4,10 @@ import { setRequestLocale, getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { HeaderSearch } from "@/components/HeaderSearch";
+import { CategoriesDropdown } from "@/components/CategoriesDropdown";
 import "@/app/globals.css";
 
 /**
@@ -46,13 +49,24 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body className="min-h-screen flex flex-col bg-white text-gray-900">
         <NextIntlClientProvider messages={messages}>
-          {/* Site header */}
-          <header className="border-b border-gray-200">
+          {/* Site header — relative positioning so the mobile search panel
+              can be absolutely positioned below the header bar. */}
+          <header className="relative border-b border-gray-200">
             <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
-              <span className="text-xl font-bold tracking-tight">
+              {/* Wordmark links to the homepage */}
+              <Link href="/" className="text-xl font-bold tracking-tight shrink-0">
                 {t("brand")}
-              </span>
-              <LocaleSwitcher />
+              </Link>
+
+              {/* Persistent search — visible inline on desktop, toggle on mobile.
+                  HeaderSearch is a client component that wraps SearchAutocomplete. */}
+              <HeaderSearch />
+
+              {/* Right-side navigation: categories dropdown + locale switcher */}
+              <div className="flex items-center gap-3 shrink-0">
+                <CategoriesDropdown />
+                <LocaleSwitcher />
+              </div>
             </div>
           </header>
 

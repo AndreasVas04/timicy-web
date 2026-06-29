@@ -24,7 +24,23 @@ interface SearchResult {
   offer_count: number;
 }
 
-export function SearchAutocomplete() {
+/**
+ * Props for SearchAutocomplete.
+ *
+ * - instanceId: unique suffix for ARIA ids so multiple instances on the same
+ *   page (e.g. header + hero) don't produce duplicate DOM ids.
+ * - compact: when true, uses smaller padding/text for tight spaces like
+ *   the site header.
+ */
+interface SearchAutocompleteProps {
+  instanceId?: string;
+  compact?: boolean;
+}
+
+export function SearchAutocomplete({
+  instanceId = "main",
+  compact = false,
+}: SearchAutocompleteProps = {}) {
   const t = useTranslations("search");
   const router = useRouter();
 
@@ -38,7 +54,10 @@ export function SearchAutocomplete() {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const listboxId = "search-listbox";
+  // Unique ids per instance to avoid DOM id collisions when multiple
+  // SearchAutocomplete components are rendered on the same page.
+  const listboxId = `search-listbox-${instanceId}`;
+  const optionIdPrefix = `search-option-${instanceId}`;
 
   /**
    * Stale-response guard: we track the latest query that was sent to the
@@ -200,11 +219,12 @@ export function SearchAutocomplete() {
         aria-expanded={showDropdown}
         aria-controls={listboxId}
         aria-activedescendant={
-          highlightIndex >= 0 ? `search-option-${highlightIndex}` : undefined
+          highlightIndex >= 0 ? `${optionIdPrefix}-${highlightIndex}` : undefined
         }
         aria-autocomplete="list"
-        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base
-                   focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className={`w-full rounded-lg border border-gray-300 text-base
+                   focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+                   ${compact ? "px-3 py-1.5 text-sm" : "px-4 py-3"}`}
       />
 
       {/* Loading indicator — subtle dot animation next to the input */}
@@ -230,7 +250,7 @@ export function SearchAutocomplete() {
             results.map((result, index) => (
               <li
                 key={result.id}
-                id={`search-option-${index}`}
+                id={`${optionIdPrefix}-${index}`}
                 role="option"
                 aria-selected={index === highlightIndex}
               >

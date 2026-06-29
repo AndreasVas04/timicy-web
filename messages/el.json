@@ -1,7 +1,9 @@
 {
   "nav": {
     "brand": "TimiCY",
-    "switchLanguage": "English"
+    "switchLanguage": "English",
+    "categories": "Κατηγορίες",
+    "searchToggle": "Αναζήτηση"
   },
   "home": {
     "title": "Βρες την καλύτερη τιμή στην Κύπρο",
