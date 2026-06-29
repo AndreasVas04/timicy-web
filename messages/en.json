@@ -35,5 +35,11 @@
     "pricesFromStores": "Prices from {count} stores",
     "noOffers": "No offers available for this product",
     "metaDescription": "Compare prices for {title} across Cypriot stores. Find the best deal on TimiCY."
+  },
+  "search": {
+    "placeholder": "Search for a product...",
+    "noResults": "No results found",
+    "loading": "Searching…",
+    "fromPrice": "from {price}"
   }
 }
