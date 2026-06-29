@@ -2,13 +2,11 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { CATEGORY_SLUGS, getCategoryLabel } from "@/lib/categories";
-import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 
 /**
- * Homepage — server-rendered hero with a title, tagline, search autocomplete,
- * and a grid of category links for browsing.
- * The page itself is a Server Component; SearchAutocomplete is a Client
- * Component island for interactive search.
+ * Homepage — server-rendered hero with a title, tagline, and a grid of
+ * category links for browsing. Search lives in the site header (HeaderSearch)
+ * so it is available on every page including this one.
  */
 export default async function HomePage({
   params,
@@ -25,9 +23,6 @@ export default async function HomePage({
     <div className="flex flex-col items-center justify-center gap-6 py-16 text-center">
       <h1 className="text-3xl font-bold sm:text-4xl">{t("title")}</h1>
       <p className="max-w-lg text-gray-600">{t("tagline")}</p>
-
-      {/* Live search autocomplete — fetches from /api/search */}
-      <SearchAutocomplete />
 
       {/* Category grid — links to all 21 category listing pages */}
       <section className="w-full max-w-3xl mt-8">
