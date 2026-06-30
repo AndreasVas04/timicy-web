@@ -6,6 +6,8 @@
  * the trailing numeric id parsed from "-p{id}".
  */
 
+import { decodeEntities } from "./decode-entities";
+
 /**
  * Convert a product title into a URL-safe slug.
  *
@@ -21,7 +23,7 @@
  * cosmetic only since lookup is always by numeric id.
  */
 export function slugify(text: string): string {
-  const slug = text
+  const slug = decodeEntities(text)
     .toLowerCase()
     // Decompose Unicode so diacritics become separate combining marks.
     .normalize("NFD")
