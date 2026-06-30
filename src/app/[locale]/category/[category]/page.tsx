@@ -11,6 +11,8 @@ import {
   type CategorySlug,
 } from "@/lib/categories";
 import { buildProductSlug } from "@/lib/slug";
+import { decodeEntities } from "@/lib/decode-entities";
+import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
 import {
   getCategoryProducts,
   isValidSort,
@@ -63,17 +65,41 @@ export async function generateMetadata({
   const canonicalPath = `/${locale}/category/${category}`;
 
   // Build hreflang alternates for every supported locale.
-  const languages: Record<string, string> = {};
+  // x-default points to the Greek (primary) version of this category.
+  const languages: Record<string, string> = {
+    "x-default": `/el/category/${category}`,
+  };
   for (const loc of routing.locales) {
     languages[loc] = `/${loc}/category/${category}`;
   }
 
+  const title = `${label} — TimiCY`;
+  const description = t("metaDescription", { category: label });
+
   return {
-    title: `${label} — TimiCY`,
-    description: t("metaDescription", { category: label }),
+    title,
+    description,
     alternates: {
       canonical: canonicalPath,
+      // hreflang alternates so search engines serve the right locale.
       languages,
+    },
+    // Open Graph metadata for rich social previews (Facebook, LinkedIn, etc.)
+    openGraph: {
+      title,
+      description,
+      url: canonicalPath,
+      siteName: "TimiCY",
+      locale: OG_LOCALE[locale] ?? "el_CY",
+      type: "website",
+      images: [OG_FALLBACK_IMAGE],
+    },
+    // Twitter/X card metadata — large-image format for visual impact.
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [OG_FALLBACK_IMAGE],
     },
   };
 }
@@ -196,7 +222,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                   {product.image_url ? (
                     <img
                       src={product.image_url}
-                      alt={product.canonical_title}
+                      alt={decodeEntities(product.canonical_title)}
                       className="max-w-full max-h-full object-contain"
                       loading="lazy"
                     />
@@ -213,9 +239,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                     </span>
                   )}
 
-                  {/* Title */}
+                  {/* Title — decode HTML entities for clean display */}
                   <span className="text-sm font-medium line-clamp-2">
-                    {product.canonical_title}
+                    {decodeEntities(product.canonical_title)}
                   </span>
 
                   {/* Price */}

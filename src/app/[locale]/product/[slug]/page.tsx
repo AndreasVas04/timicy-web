@@ -5,6 +5,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { parseProductId, buildProductSlug } from "@/lib/slug";
 import { getProductById, getOffersForProduct } from "@/lib/queries/product";
 import { routing } from "@/i18n/routing";
+import { decodeEntities } from "@/lib/decode-entities";
+import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
 import PriceAlertForm from "@/components/PriceAlertForm";
 
 /**
@@ -42,17 +44,50 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalSlug = buildProductSlug(id, product.canonical_title);
 
   // Build hreflang alternates for every supported locale.
-  const languages: Record<string, string> = {};
+  // x-default points to the Greek (primary) version of this product.
+  const languages: Record<string, string> = {
+    "x-default": `/el/product/${canonicalSlug}`,
+  };
   for (const loc of routing.locales) {
     languages[loc] = `/${loc}/product/${canonicalSlug}`;
   }
 
+  // Decode HTML entities so titles like "Sony &amp; Bose" render cleanly
+  // in browser tabs, search results, and social previews.
+  const decodedTitle = decodeEntities(product.canonical_title);
+
+  const title = `${decodedTitle} — TimiCY`;
+  const description = t("metaDescription", { title: decodedTitle });
+  const selfUrl = `/${locale}/product/${canonicalSlug}`;
+
+  // Use the product's own image for social previews; fall back to the site
+  // logo when no product image is available.
+  const ogImage = product.image_url ?? OG_FALLBACK_IMAGE;
+
   return {
-    title: `${product.canonical_title} — TimiCY`,
-    description: t("metaDescription", { title: product.canonical_title }),
+    title,
+    description,
     alternates: {
-      canonical: `/${locale}/product/${canonicalSlug}`,
+      canonical: selfUrl,
       languages,
+    },
+    // Open Graph metadata for rich social previews (Facebook, LinkedIn, etc.)
+    openGraph: {
+      title,
+      description,
+      url: selfUrl,
+      siteName: "TimiCY",
+      locale: OG_LOCALE[locale] ?? "el_CY",
+      type: "website",
+      images: [ogImage],
+    },
+    // Twitter/X card metadata — uses the large-image card format for
+    // maximum visual impact in the feed.
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
     },
   };
 }
@@ -119,7 +154,7 @@ export default async function ProductPage({ params }: PageProps) {
           {product.image_url ? (
             <img
               src={product.image_url}
-              alt={product.canonical_title}
+              alt={decodeEntities(product.canonical_title)}
               className="max-w-full max-h-full object-contain"
             />
           ) : (
@@ -129,7 +164,7 @@ export default async function ProductPage({ params }: PageProps) {
 
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl sm:text-3xl font-bold">
-            {product.canonical_title}
+            {decodeEntities(product.canonical_title)}
           </h1>
 
           {product.brand && (

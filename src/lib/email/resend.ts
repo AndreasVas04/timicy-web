@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { decodeEntities } from "@/lib/decode-entities";
 
 /**
  * Lazily-initialized Resend client.
@@ -63,9 +64,13 @@ export async function sendActivationEmail({
   // Pick localized strings based on the user's locale
   const isGreek = locale === "el";
 
+  // Decode HTML entities in the product title so the email subject line
+  // reads cleanly (e.g. "Sony &amp; Bose" → "Sony & Bose").
+  const decodedTitle = decodeEntities(productTitle);
+
   const subject = isGreek
-    ? `Η ειδοποίηση τιμής για ${productTitle} είναι ενεργή`
-    : `Your price alert for ${productTitle} is active`;
+    ? `Η ειδοποίηση τιμής για ${decodedTitle} είναι ενεργή`
+    : `Your price alert for ${decodedTitle} is active`;
 
   const heading = isGreek
     ? "Η ειδοποίηση τιμής σου είναι ενεργή"

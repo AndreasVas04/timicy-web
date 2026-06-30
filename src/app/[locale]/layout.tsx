@@ -11,12 +11,16 @@ import { HeaderSearch } from "@/components/HeaderSearch";
 import { CategoriesDropdown } from "@/components/CategoriesDropdown";
 import "@/app/globals.css";
 
+import { SITE_URL } from "@/lib/site-url";
+
 /**
  * Base metadata for the entire site. metadataBase is used by Next.js to resolve
  * relative URLs in metadata (canonical, Open Graph, etc.) into absolute URLs.
+ * Importing SITE_URL from site-url.ts ensures a single source of truth and
+ * throws immediately if the env var is missing (no silent localhost fallback).
  */
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(SITE_URL),
 };
 
 /**
