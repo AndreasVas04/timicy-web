@@ -4,6 +4,7 @@ import { setRequestLocale, getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { HeaderSearch } from "@/components/HeaderSearch";
@@ -53,9 +54,20 @@ export default async function LocaleLayout({
               can be absolutely positioned below the header bar. */}
           <header className="relative border-b border-gray-200">
             <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
-              {/* Wordmark links to the homepage */}
-              <Link href="/" className="text-xl font-bold tracking-tight shrink-0">
-                {t("brand")}
+              {/* Logo links to the homepage. The source image has been
+                  trimmed to remove transparent padding (cropped native size:
+                  1193×303, aspect ratio ≈ 3.94). Displayed at 157×40 to fit
+                  the header bar while preserving the exact aspect ratio.
+                  `priority` is set because this is above-the-fold on every
+                  page, which improves Largest Contentful Paint (LCP). */}
+              <Link href="/" className="shrink-0">
+                <Image
+                  src="/TimiCY_logo.png"
+                  alt="TimiCY"
+                  width={157}
+                  height={40}
+                  priority
+                />
               </Link>
 
               {/* Persistent search — visible inline on desktop, toggle on mobile.
