@@ -1,31 +1,55 @@
 import "server-only";
 
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createAnonClient } from "@/lib/supabase/anon";
 
 /**
- * Cached product fetch — React's cache() deduplicates calls within a single
- * request, so the page component and generateMetadata share one DB query.
+ * Cached product fetch — two layers of caching work together:
+ *
+ * 1. unstable_cache (Next.js Data Cache): persists the Supabase response
+ *    across requests until the 'catalog' tag is revalidated (POST
+ *    /api/revalidate) or the time backstop expires. The cache key is
+ *    composed of keyParts + the serialized function arguments, so each
+ *    product id gets its own entry automatically.
+ *
+ * 2. React cache(): deduplicates calls within a single server render so
+ *    the page component and generateMetadata share one cache lookup
+ *    instead of two.
+ *
+ * Composition: cache( unstable_cache( innerFn, keyParts, options ) )
  */
-export const getProductById = cache(async (id: number) => {
-  const supabase = createAnonClient();
+export const getProductById = cache(
+  unstable_cache(
+    async (id: number) => {
+      const supabase = createAnonClient();
 
-  // Select only the columns needed for the product page and metadata.
-  const { data, error } = await supabase
-    .from("products")
-    .select(
-      "id, canonical_title, brand, category, image_url, min_price, max_price, offer_count, needs_review"
-    )
-    .eq("id", id)
-    .maybeSingle();
+      // Select only the columns needed for the product page and metadata.
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          "id, canonical_title, brand, category, image_url, min_price, max_price, offer_count, needs_review"
+        )
+        .eq("id", id)
+        .maybeSingle();
 
-  if (error) {
-    console.error("Failed to fetch product:", error.message);
-    return null;
-  }
+      if (error) {
+        console.error("Failed to fetch product:", error.message);
+        return null;
+      }
 
-  return data;
-});
+      return data;
+    },
+    ["getProductById"],
+    {
+      tags: ["catalog"],
+      // revalidate: 3600 is the interim time backstop; raise to 86400 in
+      // Step 11 when the webhook caller is connected, to match the
+      // page-level revalidate.
+      revalidate: 3600,
+    }
+  )
+);
 
 /**
  * De-duplicate offers so only ONE representative per store is shown.
@@ -100,30 +124,41 @@ function pickRepresentative<
  * Fetch all store offers linked to a product, de-duplicated to one
  * representative per store and sorted cheapest-first.
  *
- * All variant rows are fetched so the de-duplication logic can choose the
- * best representative per store.
+ * Wrapped in unstable_cache so offer data is served from the Data Cache
+ * until the 'catalog' tag is revalidated. The productId argument is
+ * serialized into the cache key automatically by unstable_cache.
  *
- * Does NOT use cache() — offers are only fetched once by the page component,
- * and generateMetadata doesn't need them.
+ * Does NOT use React cache() — offers are only fetched once by the page
+ * component, and generateMetadata doesn't need them.
  */
-export async function getOffersForProduct(productId: number) {
-  const supabase = createAnonClient();
+export const getOffersForProduct = unstable_cache(
+  async (productId: number) => {
+    const supabase = createAnonClient();
 
-  const { data, error } = await supabase
-    .from("store_products")
-    .select(
-      "store, current_price, product_url, available, title, image_url"
-    )
-    .eq("product_id", productId)
-    // Cheapest first; nulls (unknown price) go to the end.
-    .order("current_price", { ascending: true, nullsFirst: false });
+    const { data, error } = await supabase
+      .from("store_products")
+      .select(
+        "store, current_price, product_url, available, title, image_url"
+      )
+      .eq("product_id", productId)
+      // Cheapest first; nulls (unknown price) go to the end.
+      .order("current_price", { ascending: true, nullsFirst: false });
 
-  if (error) {
-    console.error("Failed to fetch offers:", error.message);
-    return [];
+    if (error) {
+      console.error("Failed to fetch offers:", error.message);
+      return [];
+    }
+
+    // De-duplicate to one representative offer per store (see
+    // dedupeOffersByStore for the rationale around color/finish variants).
+    return dedupeOffersByStore(data ?? []);
+  },
+  ["getOffersForProduct"],
+  {
+    tags: ["catalog"],
+    // revalidate: 3600 is the interim time backstop; raise to 86400 in
+    // Step 11 when the webhook caller is connected, to match the
+    // page-level revalidate.
+    revalidate: 3600,
   }
-
-  // De-duplicate to one representative offer per store (see dedupeOffersByStore
-  // for the rationale around color/finish variants).
-  return dedupeOffersByStore(data ?? []);
-}
+);
