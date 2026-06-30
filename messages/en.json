@@ -49,5 +49,24 @@
     "prev": "Previous",
     "next": "Next",
     "pageOf": "Page {current} of {total}"
+  },
+  "alerts": {
+    "formTitle": "Price alert",
+    "formDescription": "Get notified by email when the price drops to your target.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "priceLabel": "Target price",
+    "submitButton": "Set alert",
+    "submitting": "Sending…",
+    "successMessage": "Your price alert is active — we've emailed you the details.",
+    "invalidEmail": "Please enter a valid email address.",
+    "invalidPrice": "Please enter a price greater than zero.",
+    "unsubscribeTitle": "Unsubscribe from price alert",
+    "unsubscribeDescription": "Click the button below to remove your price alert.",
+    "unsubscribeButton": "Unsubscribe",
+    "unsubscribeSuccess": "You have been unsubscribed. You will no longer receive alerts for this product.",
+    "invalidToken": "This link is no longer valid. It may have already been used.",
+    "genericError": "Something went wrong. Please try again.",
+    "processing": "Processing…"
   }
 }

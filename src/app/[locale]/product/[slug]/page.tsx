@@ -5,6 +5,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { parseProductId, buildProductSlug } from "@/lib/slug";
 import { getProductById, getOffersForProduct } from "@/lib/queries/product";
 import { routing } from "@/i18n/routing";
+import PriceAlertForm from "@/components/PriceAlertForm";
 
 /**
  * On-demand ISR: product pages are not pre-built (no generateStaticParams).
@@ -217,6 +218,15 @@ export default async function ProductPage({ params }: PageProps) {
           </ul>
         )}
       </section>
+
+      {/* Price alert subscription form — allows users to get notified when
+          the price drops to their target. Uses the product's current min_price
+          as the default/hint value for the target price. */}
+      <PriceAlertForm
+        productId={product.id}
+        currentMinPrice={product.min_price ? Number(product.min_price) : 0}
+        locale={locale}
+      />
     </article>
   );
 }

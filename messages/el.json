@@ -49,5 +49,24 @@
     "prev": "Προηγούμενη",
     "next": "Επόμενη",
     "pageOf": "Σελίδα {current} από {total}"
+  },
+  "alerts": {
+    "formTitle": "Ειδοποίηση τιμής",
+    "formDescription": "Λάβε ειδοποίηση μέσω email όταν η τιμή πέσει στον στόχο σου.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "priceLabel": "Τιμή στόχος",
+    "submitButton": "Ορισμός ειδοποίησης",
+    "submitting": "Αποστολή…",
+    "successMessage": "Η ειδοποίηση τιμής είναι ενεργή — σου στείλαμε τις λεπτομέρειες με email.",
+    "invalidEmail": "Εισάγετε μια έγκυρη διεύθυνση email.",
+    "invalidPrice": "Εισάγετε μια τιμή μεγαλύτερη από μηδέν.",
+    "unsubscribeTitle": "Διαγραφή από ειδοποίηση τιμής",
+    "unsubscribeDescription": "Πάτησε το κουμπί παρακάτω για να καταργήσεις την ειδοποίηση τιμής.",
+    "unsubscribeButton": "Διαγραφή",
+    "unsubscribeSuccess": "Η διαγραφή ολοκληρώθηκε. Δεν θα λαμβάνεις πλέον ειδοποιήσεις για αυτό το προϊόν.",
+    "invalidToken": "Αυτός ο σύνδεσμος δεν είναι πλέον έγκυρος. Ίσως έχει ήδη χρησιμοποιηθεί.",
+    "genericError": "Κάτι πήγε στραβά. Δοκιμάστε ξανά.",
+    "processing": "Επεξεργασία…"
   }
 }
