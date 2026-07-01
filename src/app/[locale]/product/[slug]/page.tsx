@@ -4,10 +4,13 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import { parseProductId, buildProductSlug } from "@/lib/slug";
 import { getProductById, getOffersForProduct } from "@/lib/queries/product";
+import { getPriceHistoryForProduct } from "@/lib/queries/price-history";
+import { reconstructCheapestSeries } from "@/lib/price-history/reconstruct";
 import { routing } from "@/i18n/routing";
 import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
 import PriceAlertForm from "@/components/PriceAlertForm";
+import PriceHistoryChart from "@/components/PriceHistoryChart";
 
 /**
  * On-demand ISR: product pages are not pre-built (no generateStaticParams).
@@ -128,6 +131,13 @@ export default async function ProductPage({ params }: PageProps) {
   /* --- Data loading ----------------------------------------------------- */
 
   const offers = await getOffersForProduct(id);
+
+  // Fetch raw price-history events and reconstruct the cheapest-per-day
+  // time-series.  Reconstruction runs OUTSIDE the cached read, on every
+  // render, so the now-edge stays current — this is intentional.
+  const priceHistory = await getPriceHistoryForProduct(id);
+  const pricePoints = reconstructCheapestSeries(priceHistory, new Date());
+
   const t = await getTranslations("product");
 
   // Find the cheapest AVAILABLE offer to highlight as best price.
@@ -251,6 +261,31 @@ export default async function ProductPage({ params }: PageProps) {
               );
             })}
           </ul>
+        )}
+      </section>
+
+      {/* Price history chart section — shows the cheapest available price
+          over time as a step-line chart.  Empty state is handled inline
+          with a muted message when no history data exists yet. */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold mb-4">{t("priceHistory")}</h2>
+
+        {pricePoints.length === 0 ? (
+          <p className="text-sm text-gray-400">{t("noPriceHistory")}</p>
+        ) : (
+          <PriceHistoryChart
+            points={pricePoints}
+            locale={locale}
+            labels={{
+              unavailable: t("unavailable"),
+              collectingHistory: t("collectingHistory"),
+              rangeWeek: t("rangeWeek"),
+              rangeMonth: t("rangeMonth"),
+              range6mo: t("range6mo"),
+              rangeYear: t("rangeYear"),
+              rangeAll: t("rangeAll"),
+            }}
+          />
         )}
       </section>
 

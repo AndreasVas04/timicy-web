@@ -35,7 +35,16 @@
     "category": "Category",
     "pricesFromStores": "Prices from {count} stores",
     "noOffers": "No offers available for this product",
-    "metaDescription": "Compare prices for {title} across Cypriot stores. Find the best deal on TimiCY."
+    "metaDescription": "Compare prices for {title} across Cypriot stores. Find the best deal on TimiCY.",
+    "priceHistory": "Price history",
+    "noPriceHistory": "No price history data available yet.",
+    "unavailable": "Unavailable",
+    "collectingHistory": "Price history is starting to be collected.",
+    "rangeWeek": "Week",
+    "rangeMonth": "Month",
+    "range6mo": "6 months",
+    "rangeYear": "Year",
+    "rangeAll": "All"
   },
   "search": {
     "placeholder": "Search for a product...",
