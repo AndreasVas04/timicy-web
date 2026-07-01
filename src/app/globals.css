@@ -1,2 +1,46 @@
 /* Tailwind v4 CSS-first configuration */
 @import "tailwindcss";
+
+/*
+ * TimiCY design tokens.
+ * Brand colors were sampled directly from the logo artwork so the whole
+ * site stays visually consistent with the wordmark.
+ * Declaring them inside @theme makes each one available BOTH as a CSS
+ * variable (e.g. var(--color-ink)) AND as Tailwind utilities
+ * (bg-ink, text-brand, border-line, etc.) that later jobs will use.
+ */
+@theme {
+  /* Brand palette (from the logo) */
+  --color-ink: #0A2540;          /* deep navy — primary text, headers, primary buttons */
+  --color-brand: #0BA4B4;        /* teal — links, focus rings, interactive accents */
+  --color-brand-hover: #0A93A1;  /* teal, slightly darker — hover state for brand elements */
+  --color-accent: #0A6FB0;       /* mid blue — used sparingly (chart line, secondary accents) */
+
+  /* Semantic colors */
+  --color-price: #15803D;        /* emerald — reserved for prices / best-price only */
+  --color-save: #E0871E;         /* amber — reserved for savings badges ("save €X") only */
+
+  /* Surfaces */
+  --color-page: #F7F8FA;         /* very light cool gray — page background */
+  --color-surface: #FFFFFF;      /* white — cards, header, panels */
+  --color-line: #E4E7EB;         /* hairline border color */
+
+  /*
+   * Font families. next/font injects --font-inter and --font-manrope
+   * (see layout.tsx). Mapping them here lets Tailwind's font-sans /
+   * font-heading utilities and the base styles below resolve to them.
+   * Tailwind v4 also uses --font-sans as the default body font automatically.
+   */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Base-layer defaults. Headings use the Manrope (heading) family; body text
+ * inherits the sans (Inter) family automatically from Tailwind's defaults.
+ */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}

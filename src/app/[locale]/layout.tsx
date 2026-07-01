@@ -9,7 +9,23 @@ import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { CategoriesDropdown } from "@/components/CategoriesDropdown";
+import { Inter, Manrope } from "next/font/google";
 import "@/app/globals.css";
+
+// Body font. `variable` exposes it as the --font-inter CSS variable,
+// which globals.css maps to --font-sans. `display: "swap"` avoids blocking text render.
+const inter = Inter({
+  subsets: ["latin", "greek"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+// Heading / wordmark font. Exposed as --font-manrope, mapped to --font-heading in globals.css.
+const manrope = Manrope({
+  subsets: ["latin", "greek"],
+  variable: "--font-manrope",
+  display: "swap",
+});
 
 import { SITE_URL } from "@/lib/site-url";
 
@@ -51,12 +67,12 @@ export default async function LocaleLayout({
   const t = await getTranslations("nav");
 
   return (
-    <html lang={locale}>
-      <body className="min-h-screen flex flex-col bg-white text-gray-900">
+    <html lang={locale} className={`${inter.variable} ${manrope.variable}`}>
+      <body className="min-h-screen flex flex-col bg-page text-gray-900">
         <NextIntlClientProvider messages={messages}>
           {/* Site header — relative positioning so the mobile search panel
               can be absolutely positioned below the header bar. */}
-          <header className="relative border-b border-gray-200">
+          <header className="relative bg-surface border-b border-line">
             <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
               {/* Logo links to the homepage. The source image has been
                   trimmed to remove transparent padding (cropped native size:
@@ -78,9 +94,12 @@ export default async function LocaleLayout({
                   HeaderSearch is a client component that wraps SearchAutocomplete. */}
               <HeaderSearch />
 
-              {/* Right-side navigation: categories dropdown + locale switcher */}
-              <div className="flex items-center gap-3 shrink-0">
+              {/* Right-side navigation: categories dropdown, a hairline divider, then the locale
+                  switcher. The divider gives the two controls clear separation so they no longer
+                  feel cramped together. */}
+              <div className="flex items-center gap-4 shrink-0">
                 <CategoriesDropdown />
+                <span aria-hidden="true" className="h-5 w-px bg-line"></span>
                 <LocaleSwitcher />
               </div>
             </div>
