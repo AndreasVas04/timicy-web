@@ -201,38 +201,51 @@ export function SearchAutocomplete({
 
   return (
     <div ref={containerRef} className="relative w-full max-w-md">
-      {/* Search input */}
-      <input
-        ref={inputRef}
-        type="text"
-        value={query}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          // Re-open dropdown if there are results when the input is re-focused.
-          if (results.length > 0 && query.trim().length >= 2) {
-            setOpen(true);
-          }
-        }}
-        placeholder={t("placeholder")}
-        role="combobox"
-        aria-expanded={showDropdown}
-        aria-controls={listboxId}
-        aria-activedescendant={
-          highlightIndex >= 0 ? `${optionIdPrefix}-${highlightIndex}` : undefined
-        }
-        aria-autocomplete="list"
-        className={`w-full rounded-lg border border-gray-300 text-base
-                   focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                   ${compact ? "px-3 py-1.5 text-sm" : "px-4 py-3"}`}
-      />
-
-      {/* Loading indicator — subtle dot animation next to the input */}
-      {loading && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-          {t("loading")}
+      {/* Input wrapper: relative so the leading icon and trailing spinner align to the
+          input itself, independent of the dropdown that follows below. */}
+      <div className="relative">
+        {/* Leading magnifier icon (decorative). */}
+        <span className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400`} aria-hidden="true">
+          <svg className={compact ? "h-4 w-4" : "h-5 w-5"} xmlns="http://www.w3.org/2000/svg"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
         </span>
-      )}
+
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (results.length > 0 && query.trim().length >= 2) {
+              setOpen(true);
+            }
+          }}
+          placeholder={t("placeholder")}
+          role="combobox"
+          aria-expanded={showDropdown}
+          aria-controls={listboxId}
+          aria-activedescendant={
+            highlightIndex >= 0 ? `${optionIdPrefix}-${highlightIndex}` : undefined
+          }
+          aria-autocomplete="list"
+          className={`w-full rounded-lg border border-line
+                     focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand
+                     ${compact ? "pl-9 pr-9 py-1.5 text-sm" : "pl-11 pr-11 py-3 text-base"}`}
+        />
+
+        {/* Trailing loading spinner — replaces the previous text label. */}
+        {loading && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-brand" aria-hidden="true">
+            <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </span>
+        )}
+      </div>
 
       {/* Dropdown */}
       {showDropdown && (
@@ -260,8 +273,8 @@ export function SearchAutocomplete({
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${
                     index === highlightIndex
-                      ? "bg-blue-50"
-                      : "hover:bg-gray-50"
+                      ? "bg-brand/10"
+                      : "hover:bg-page"
                   }`}
                 >
                   {/* Product image with fallback for null image_url */}

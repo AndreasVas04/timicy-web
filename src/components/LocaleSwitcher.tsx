@@ -24,7 +24,7 @@ export function LocaleSwitcher() {
   return (
     <button
       onClick={handleSwitch}
-      className="text-sm font-medium text-gray-600 hover:text-gray-900"
+      className="rounded-lg border border-line px-2.5 py-1 text-sm font-medium text-gray-700 hover:border-brand hover:text-brand transition-colors"
     >
       {label}
     </button>
