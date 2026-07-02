@@ -52,6 +52,37 @@ export const getProductById = cache(
 );
 
 /**
+ * Look up the redirect target for an absorbed (merged) product id.
+ * When canonical products are merged in the data pipeline, the absorbed
+ * product row is deleted and a row is written to `merged_products`
+ * mapping old_id -> new_id. The writer guarantees chain compression
+ * (every mapping is single-hop), so one lookup fully resolves the target.
+ * Returns the surviving product id, or null if the id was never merged.
+ */
+export const getMergedRedirectTarget = unstable_cache(
+  async (oldId: number): Promise<number | null> => {
+    const supabase = createAnonClient();
+
+    const { data, error } = await supabase
+      .from("merged_products")
+      .select("new_id")
+      .eq("old_id", oldId)
+      .maybeSingle();
+
+    // If the lookup fails or returns no row, the id was never merged.
+    if (error || !data) return null;
+
+    // Return the surviving product's id for the caller to redirect to.
+    return data.new_id;
+  },
+  ["getMergedRedirectTarget"],
+  {
+    tags: ["catalog"],
+    revalidate: 3600,
+  }
+);
+
+/**
  * De-duplicate offers so only ONE representative per store is shown.
  *
  * A single store can have multiple store_products rows for the same canonical

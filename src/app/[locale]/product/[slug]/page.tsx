@@ -3,7 +3,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { parseProductId, buildProductSlug } from "@/lib/slug";
-import { getProductById, getOffersForProduct } from "@/lib/queries/product";
+import {
+  getProductById,
+  getOffersForProduct,
+  getMergedRedirectTarget,
+} from "@/lib/queries/product";
 import { getPriceHistoryForProduct } from "@/lib/queries/price-history";
 import { reconstructCheapestSeries } from "@/lib/price-history/reconstruct";
 import { routing } from "@/i18n/routing";
@@ -113,7 +117,22 @@ export default async function ProductPage({ params }: PageProps) {
 
   // 2. Fetch the product from the database.
   const product = await getProductById(id);
-  if (!product) notFound();
+  if (!product) {
+    // The id may belong to a product that was absorbed into another
+    // canonical during a data-pipeline merge. merged_products keeps a
+    // single-hop redirect trail so old URLs (still present in search
+    // engines and the sitemap) permanently redirect instead of 404ing.
+    const survivorId = await getMergedRedirectTarget(id);
+    if (survivorId !== null) {
+      const survivor = await getProductById(survivorId);
+      if (survivor) {
+        permanentRedirect(
+          `/${locale}/product/${buildProductSlug(survivor.id, survivor.canonical_title)}`
+        );
+      }
+    }
+    notFound();
+  }
 
   // 3. Canonical redirect: if the slug text doesn't match the current
   //    canonical_title, redirect to the correct URL so search engines
