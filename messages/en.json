@@ -25,7 +25,9 @@
     "next": "Next",
     "pageOf": "Page {current} of {total}",
     "metaDescription": "Compare prices for {category} across Cypriot stores. Find the best deals on TimiCY.",
-    "browseCategories": "Categories"
+    "browseCategories": "Categories",
+    "unavailable": "Out of stock",
+    "noImage": "No image"
   },
   "product": {
     "bestPrice": "Best price",

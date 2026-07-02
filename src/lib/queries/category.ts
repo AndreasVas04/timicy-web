@@ -56,6 +56,7 @@ export const getCategoryProducts = unstable_cache(
       max_price: number | null;
       offer_count: number;
       store_count: number;
+      has_available_offer: boolean;
     }[];
     total: number;
   }> => {
@@ -68,31 +69,46 @@ export const getCategoryProducts = unstable_cache(
     let query = supabase
       .from("products")
       .select(
-        "id, canonical_title, brand, image_url, min_price, max_price, offer_count, store_count",
+        "id, canonical_title, brand, image_url, min_price, max_price, offer_count, store_count, has_available_offer",
         { count: "exact" }
       )
       .eq("category", category);
 
     // Apply sort order based on the requested key.
+    //
+    // Every sort branch starts with has_available_offer DESC so that
+    // products with at least one buyable offer appear first, and
+    // all-unavailable products sink to the bottom of the listing.
+    // All-unavailable products are kept visible (never filtered out)
+    // because their product pages remain useful — users can view
+    // price history and set alerts — and availability data refreshes
+    // with each scrape, so an unavailable product may become
+    // available again at any time.
     switch (sort) {
       case "price_asc":
-        // Cheapest first; products with no price go to the end.
-        query = query.order("min_price", {
-          ascending: true,
-          nullsFirst: false,
-        });
+        // Buyable first, then cheapest first; nulls go to the end.
+        query = query
+          .order("has_available_offer", { ascending: false })
+          .order("min_price", {
+            ascending: true,
+            nullsFirst: false,
+          });
         break;
       case "price_desc":
-        // Most expensive first; products with no price go to the end.
-        query = query.order("min_price", {
-          ascending: false,
-          nullsFirst: false,
-        });
+        // Buyable first, then most expensive first; nulls go to the end.
+        query = query
+          .order("has_available_offer", { ascending: false })
+          .order("min_price", {
+            ascending: false,
+            nullsFirst: false,
+          });
         break;
       case "popular":
       default:
-        // Most offers first (proxy for popularity), then cheapest among ties.
+        // Buyable first, then most offers (proxy for popularity),
+        // then cheapest among ties.
         query = query
+          .order("has_available_offer", { ascending: false })
           .order("offer_count", { ascending: false })
           .order("min_price", { ascending: true, nullsFirst: false });
         break;

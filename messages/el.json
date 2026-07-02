@@ -25,7 +25,9 @@
     "next": "Επόμενη",
     "pageOf": "Σελίδα {current} από {total}",
     "metaDescription": "Σύγκρινε τιμές για {category} σε κυπριακά καταστήματα. Βρες τις καλύτερες προσφορές στο TimiCY.",
-    "browseCategories": "Κατηγορίες"
+    "browseCategories": "Κατηγορίες",
+    "unavailable": "Μη διαθέσιμο",
+    "noImage": "Χωρίς εικόνα"
   },
   "product": {
     "bestPrice": "Καλύτερη τιμή",

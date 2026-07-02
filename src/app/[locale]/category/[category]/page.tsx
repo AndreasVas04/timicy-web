@@ -224,19 +224,25 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                 <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
                   {/* next/image with `fill` — lazy-loads by default;
                       `unoptimized` in next.config.ts avoids Vercel proxy costs. */}
+                  {/* Product image — reduced opacity when all offers are
+                      unavailable to visually demote the card. */}
                   {product.image_url ? (
                     <Image
                       src={product.image_url}
                       alt={decodeEntities(product.canonical_title)}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-contain transition-transform duration-200 group-hover:scale-[1.03]"
+                      className={`object-contain transition-transform duration-200 group-hover:scale-[1.03]${
+                        product.has_available_offer === false ? " opacity-60" : ""
+                      }`}
                     />
                   ) : (
-                    <span className="text-gray-400 text-xs">No image</span>
+                    <span className="text-gray-400 text-xs">{t("noImage")}</span>
                   )}
                   {/* Savings chip — only shown when the price spread is
-                      meaningful enough to be worth highlighting.
+                      meaningful enough to be worth highlighting AND the
+                      product has at least one available offer. Showing a
+                      savings claim on an unbuyable product is misleading.
                       • Absolute arm (≥ €10): catches big-ticket items where
                         5 % would be too strict (e.g. €200 → €191 = €9, skip).
                       • Percentage arm (≥ 5 % of max AND ≥ €2): catches cheap
@@ -245,6 +251,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                       both arms enforce a sensible floor. */}
                   {(() => {
                     if (
+                      product.has_available_offer === false ||
                       product.store_count < 2 ||
                       product.max_price == null ||
                       product.min_price == null
@@ -276,18 +283,37 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                     {decodeEntities(product.canonical_title)}
                   </span>
 
-                  {/* Price block pushed to the card bottom so all cards align in the grid row. */}
+                  {/* Price block pushed to the card bottom so all cards align
+                      in the grid row. When the product has no available offer
+                      the price is rendered in muted gray (text-gray-400)
+                      instead of emerald (text-price), because the displayed
+                      amount is a last-known price, not a currently buyable one.
+                      An "unavailable" label is shown below the price. */}
                   <div className="mt-auto pt-1">
                     {product.min_price != null ? (
-                      <span className="block text-lg font-semibold text-price tabular-nums">
+                      <span
+                        className={`block text-lg font-semibold tabular-nums ${
+                          product.has_available_offer === false
+                            ? "text-gray-400"
+                            : "text-price"
+                        }`}
+                      >
                         {t("fromPrice", { price: `€${Number(product.min_price).toFixed(2)}` })}
                       </span>
                     ) : (
                       <span className="text-xs text-gray-400">—</span>
                     )}
-                    {product.store_count > 0 && (
-                      <span className="text-xs text-gray-500">{t("inStores", { count: product.store_count })}</span>
+                    {product.has_available_offer === false && (
+                      <span className="text-xs text-gray-400">
+                        {t("unavailable")}
+                      </span>
                     )}
+                    {product.has_available_offer !== false &&
+                      product.store_count > 0 && (
+                        <span className="text-xs text-gray-500">
+                          {t("inStores", { count: product.store_count })}
+                        </span>
+                      )}
                   </div>
                 </div>
               </Link>
