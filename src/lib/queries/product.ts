@@ -169,7 +169,8 @@ export const getOffersForProduct = unstable_cache(
     const { data, error } = await supabase
       .from("store_products")
       .select(
-        "store, current_price, product_url, available, title, image_url"
+        // last_scraped_at powers the "Prices updated" freshness badge on the product page.
+        "store, current_price, product_url, available, title, image_url, last_scraped_at"
       )
       .eq("product_id", productId)
       // Cheapest first; nulls (unknown price) go to the end.

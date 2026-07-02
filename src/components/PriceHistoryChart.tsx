@@ -365,8 +365,8 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
             onClick={() => setRange(key)}
             className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
               range === key
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                ? "bg-ink text-white border-ink"
+                : "bg-white text-gray-700 border-gray-300 hover:border-brand hover:text-brand"
             }`}
           >
             {label}
@@ -432,7 +432,7 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
             <Line
               type="stepAfter"
               dataKey="price"
-              stroke="#2563eb"
+              stroke="#0A6FB0"
               strokeWidth={2}
               connectNulls={false}
               isAnimationActive={false}
@@ -497,7 +497,7 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
                       cx={cx}
                       cy={cy}
                       r={isActive ? 7 : 5}
-                      fill="#2563eb"
+                      fill="#0A6FB0"
                       stroke="none"
                       pointerEvents="none"
                       style={noSelect}
@@ -531,7 +531,7 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
               <p className="font-medium text-gray-900">{formattedDate}</p>
               {point.price != null ? (
                 <>
-                  <p className="text-green-700 font-semibold">
+                  <p className="text-price font-semibold">
                     €{point.price.toFixed(2)}
                   </p>
                   <p className="text-gray-500">{point.store}</p>

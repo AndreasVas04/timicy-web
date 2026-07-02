@@ -92,13 +92,13 @@ export default function PriceAlertForm({
   if (status === "success") {
     return (
       <div className="border border-green-200 bg-green-50 rounded-lg p-4 mt-6">
-        <p className="text-green-800 font-medium">{t("successMessage")}</p>
+        <p className="text-price font-medium">{t("successMessage")}</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border border-gray-200 rounded-lg p-4 mt-6">
+    <form onSubmit={handleSubmit} className="border border-line rounded-lg p-4 mt-6 bg-surface">
       <h3 className="text-lg font-semibold mb-3">{t("formTitle")}</h3>
       <p className="text-sm text-gray-600 mb-4">{t("formDescription")}</p>
 
@@ -114,7 +114,7 @@ export default function PriceAlertForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t("emailPlaceholder")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
           {errors.email && (
             <p className="text-red-600 text-xs mt-1">{errors.email}</p>
@@ -135,7 +135,7 @@ export default function PriceAlertForm({
               min="0.01"
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
-              className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-7 pr-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
           {errors.price && (
@@ -166,7 +166,7 @@ export default function PriceAlertForm({
         <button
           type="submit"
           disabled={status === "submitting"}
-          className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2 bg-ink text-white text-sm font-medium rounded-md hover:bg-ink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {status === "submitting" ? t("submitting") : t("submitButton")}
         </button>

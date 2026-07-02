@@ -164,6 +164,32 @@ export default async function ProductPage({ params }: PageProps) {
   // cheaper than all available offers.
   const bestOffer = offers.find((o) => o.available && o.current_price != null);
 
+  // Highest AVAILABLE price — used for the "up to €X cheaper" savings note.
+  // Only meaningful when 2+ stores have the item available at different prices.
+  const availablePrices = offers
+    .filter((o) => o.available && o.current_price != null)
+    .map((o) => Number(o.current_price));
+  const maxAvailable = availablePrices.length >= 2 ? Math.max(...availablePrices) : null;
+  const savings =
+    bestOffer && maxAvailable != null && maxAvailable > Number(bestOffer.current_price)
+      ? maxAvailable - Number(bestOffer.current_price)
+      : null;
+
+  // Fallback when EVERY store is out of stock: show the last known (cheapest)
+  // price in muted styling instead of a green "best price" that promises a deal.
+  const lastKnownOffer = !bestOffer
+    ? offers.find((o) => o.current_price != null)
+    : null;
+
+  // Freshness: newest scrape timestamp across the representative offers.
+  const lastScraped = offers.reduce<string | null>(
+    (acc, o) => (o.last_scraped_at && (!acc || o.last_scraped_at > acc) ? o.last_scraped_at : acc),
+    null
+  );
+  const freshnessDate = lastScraped
+    ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(new Date(lastScraped))
+    : null;
+
   // Humanize the category slug for display (e.g. "washing_machines" -> "Washing Machines").
   // Localized category labels will be added in a later prompt.
   const humanCategory = product.category
@@ -192,28 +218,43 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold">
+          {product.brand && (
+            <span className="text-xs uppercase tracking-wide text-gray-500">{product.brand}</span>
+          )}
+          <h1 className="text-2xl sm:text-3xl font-bold text-ink">
             {decodeEntities(product.canonical_title)}
           </h1>
+          {humanCategory && <p className="text-sm text-gray-500">{humanCategory}</p>}
 
-          {product.brand && (
-            <p className="text-gray-600">
-              <span className="font-medium">{t("brand")}:</span> {product.brand}
-            </p>
-          )}
+          {/* Price hero: the page's focal point. Best available price large and
+              emerald; store attribution + optional savings note underneath. */}
+          {bestOffer ? (
+            <div className="mt-3">
+              <p className="text-sm text-gray-500">{t("bestPrice")}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-price tabular-nums">
+                €{Number(bestOffer.current_price).toFixed(2)}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">{t("atStore", { store: bestOffer.store })}</p>
+              {savings != null && savings >= 1 && (
+                <p className="text-sm font-medium mt-1" style={{ color: "#B96A12" }}>
+                  {t("saveVsMax", { amount: savings.toFixed(0) })}
+                </p>
+              )}
+            </div>
+          ) : lastKnownOffer ? (
+            <div className="mt-3">
+              {/* All stores out of stock — honest muted state, no green promise. */}
+              <p className="text-sm font-medium text-gray-600">{t("allUnavailable")}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {t("lastKnownPrice")}:{" "}
+                <span className="font-semibold tabular-nums">€{Number(lastKnownOffer.current_price).toFixed(2)}</span>
+              </p>
+            </div>
+          ) : null}
 
-          {humanCategory && (
-            <p className="text-gray-600">
-              <span className="font-medium">{t("category")}:</span>{" "}
-              {humanCategory}
-            </p>
-          )}
-
-          {/* Best price highlight */}
-          {bestOffer && (
-            <p className="text-xl font-semibold text-green-700 mt-2">
-              {t("bestPrice")}: €{Number(bestOffer.current_price).toFixed(2)}
-            </p>
+          {/* Freshness badge — small trust signal. */}
+          {freshnessDate && (
+            <p className="text-xs text-gray-400 mt-2">{t("pricesUpdated", { date: freshnessDate })}</p>
           )}
         </div>
       </div>
@@ -227,7 +268,7 @@ export default async function ProductPage({ params }: PageProps) {
         </h2>
 
         {offers.length > 0 && (
-          <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg">
+          <ul className="divide-y divide-line border border-line rounded-lg bg-surface">
             {offers.map((offer, idx) => {
               // Check if this is the best (cheapest available) offer.
               const isBest =
@@ -241,38 +282,38 @@ export default async function ProductPage({ params }: PageProps) {
                 <li
                   key={`${offer.store}-${offer.product_url}-${idx}`}
                   className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 ${
-                    isBest ? "bg-green-50" : ""
+                    isBest ? "bg-price/5" : ""
                   }`}
                 >
                   <div className="flex flex-col gap-1">
-                    <span className="font-medium">{offer.store}</span>
+                    {/* Store name. The cheapest available offer is indicated by the row tint
+                        and the hero price above — no extra badge needed (keep it simple). */}
+                    <span className="font-medium text-ink">{offer.store}</span>
                     {offer.current_price != null ? (
-                      <span className="text-lg font-semibold">
+                      <span className={`text-lg font-semibold tabular-nums ${offer.available ? "text-ink" : "text-gray-400"}`}>
                         €{Number(offer.current_price).toFixed(2)}
                       </span>
                     ) : (
                       <span className="text-gray-400">—</span>
                     )}
-                    {!offer.available && (
-                      <span className="text-sm text-red-600">
-                        {t("outOfStock")}
-                      </span>
-                    )}
-                    {offer.available && (
-                      <span className="text-sm text-green-600">
-                        {t("available")}
-                      </span>
+                    {!offer.available ? (
+                      <span className="text-sm text-red-600">{t("outOfStock")}</span>
+                    ) : (
+                      <span className="text-sm text-price">{t("available")}</span>
                     )}
                   </div>
 
-                  {/* "Go to store" link opens in a new tab.
-                      nofollow/sponsored rel can be added later when monetization
-                      starts; omitted for now. */}
+                  {/* CTA: solid navy for purchasable offers; quiet bordered variant for
+                      out-of-stock so the page never "sells" an unavailable item. */}
                   <a
                     href={offer.product_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                      offer.available
+                        ? "bg-ink text-white hover:bg-ink/90"
+                        : "border border-line text-gray-600 hover:border-brand hover:text-brand"
+                    }`}
                   >
                     {t("goToStore")}
                   </a>
