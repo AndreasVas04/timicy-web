@@ -138,15 +138,38 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                   ) : (
                     <span className="text-gray-400 text-xs">No image</span>
                   )}
-                  {/* Savings chip: only when the product is genuinely cheaper somewhere (2+ stores, price spread). */}
-                  {product.store_count >= 2 &&
-                    product.max_price != null &&
-                    product.min_price != null &&
-                    Number(product.max_price) > Number(product.min_price) && (
+                  {/* Savings chip — only shown when the price spread is
+                      meaningful enough to be worth highlighting.
+                      • Absolute arm (≥ €10): catches big-ticket items where
+                        5 % would be too strict (e.g. €200 → €191 = €9, skip).
+                      • Percentage arm (≥ 5 % of max AND ≥ €2): catches cheap
+                        items where €10 would never trigger (e.g. €25 → €20 = €5).
+                      A chip that says "−€0" or "−€1" undermines trust, so
+                      both arms enforce a sensible floor.
+                      (Identical logic lives in the category page — keep in sync.) */}
+                  {(() => {
+                    if (
+                      product.store_count < 2 ||
+                      product.max_price == null ||
+                      product.min_price == null
+                    )
+                      return null;
+
+                    const savings =
+                      Number(product.max_price) - Number(product.min_price);
+                    const isMeaningful =
+                      savings >= 10 ||
+                      (savings >= 0.05 * Number(product.max_price) &&
+                        savings >= 2);
+
+                    if (!isMeaningful) return null;
+
+                    return (
                       <span className="absolute top-2 left-2 rounded-md bg-save px-2 py-0.5 text-xs font-medium text-white">
-                        −€{(Number(product.max_price) - Number(product.min_price)).toFixed(0)}
+                        −€{savings.toFixed(0)}
                       </span>
-                    )}
+                    );
+                  })()}
                 </div>
 
                 <div className="flex flex-col gap-1 p-3 grow">
