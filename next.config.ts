@@ -7,6 +7,13 @@ import createNextIntlPlugin from "next-intl/plugin";
  */
 const withNextIntl = createNextIntlPlugin();
 
+/**
+ * Indexing gate — the site is noindex by default. Set ALLOW_INDEXING="true"
+ * in the environment (e.g. Vercel production) to let search engines crawl.
+ * Any other value (or unset) keeps the site hidden from crawlers.
+ */
+const allowIndexing = process.env.ALLOW_INDEXING === "true";
+
 const nextConfig: NextConfig = {
   images: {
     // Product images are hotlinked from external store CDNs. `unoptimized`
@@ -23,6 +30,27 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "storage.googleapis.com" },
       { protocol: "https", hostname: "cdn.shopify.com" },
     ],
+  },
+
+  /**
+   * Custom HTTP headers — when indexing is disallowed, attach an
+   * X-Robots-Tag header to every response so crawlers that ignore
+   * robots.txt or <meta> tags still receive a noindex directive.
+   * When ALLOW_INDEXING is "true", no extra headers are added.
+   */
+  async headers() {
+    // Allow indexing: no extra headers needed.
+    if (allowIndexing) {
+      return [];
+    }
+
+    // Block indexing: apply X-Robots-Tag to all routes.
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+    ];
   },
 };
 

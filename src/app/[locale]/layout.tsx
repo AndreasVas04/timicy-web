@@ -30,13 +30,26 @@ const manrope = Manrope({
 import { SITE_URL } from "@/lib/site-url";
 
 /**
+ * Indexing gate — when ALLOW_INDEXING is not exactly "true", the metadata
+ * object includes a robots directive that tells search engines not to index
+ * or follow links on any page. This works alongside the X-Robots-Tag header
+ * (next.config.ts) and robots.txt (robots.ts) for defence-in-depth.
+ */
+const allowIndexing = process.env.ALLOW_INDEXING === "true";
+
+/**
  * Base metadata for the entire site. metadataBase is used by Next.js to resolve
  * relative URLs in metadata (canonical, Open Graph, etc.) into absolute URLs.
  * Importing SITE_URL from site-url.ts ensures a single source of truth and
  * throws immediately if the env var is missing (no silent localhost fallback).
+ *
+ * When indexing is disallowed, a robots { index: false, follow: false }
+ * directive is spread into the object so Next.js renders the appropriate
+ * <meta name="robots"> tag in the <head>.
  */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  ...(allowIndexing ? {} : { robots: { index: false, follow: false } }),
 };
 
 /**
