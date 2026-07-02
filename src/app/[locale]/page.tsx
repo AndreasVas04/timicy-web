@@ -80,20 +80,25 @@ export default async function HomePage({ params }: PageProps) {
   const tc = await getTranslations("category");
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 py-16 text-center">
-      <h1 className="text-3xl font-bold sm:text-4xl">{t("title")}</h1>
-      <p className="max-w-lg text-gray-600">{t("tagline")}</p>
+    <div className="flex flex-col items-center py-12 sm:py-16 text-center">
+      {/* Hero: one strong statement + trust strip. No duplicate search box —
+          the persistent header search is the single search entry point. */}
+      <h1 className="text-3xl sm:text-5xl font-bold text-ink max-w-2xl leading-tight">
+        {t("title")}
+      </h1>
+      <p className="mt-4 max-w-lg text-gray-600">{t("tagline")}</p>
 
-      {/* Category grid — links to all 21 category listing pages */}
-      <section className="w-full max-w-3xl mt-8">
-        <h2 className="text-xl font-semibold mb-4">{tc("browseCategories")}</h2>
+      {/* Category grid: the primary conversion path from the homepage. */}
+      <section className="w-full max-w-4xl mt-10">
+        <h2 className="text-xl font-semibold text-ink mb-5">{tc("browseCategories")}</h2>
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {CATEGORY_SLUGS.map((slug) => (
             <li key={slug}>
               <Link
                 href={`/category/${slug}`}
-                className="block px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium
-                           text-gray-700 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                className="flex items-center justify-center h-full px-4 py-3.5 bg-surface border border-line rounded-xl
+                           text-sm font-medium text-gray-700 transition-all duration-200
+                           hover:border-brand hover:text-brand hover:shadow-sm"
               >
                 {getCategoryLabel(slug, locale)}
               </Link>

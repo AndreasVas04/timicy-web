@@ -193,9 +193,10 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             key={opt.key}
             href={buildUrl(opt.key, 1)}
             className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+              // Active sort pill uses the ink/brand palette instead of leftover blue.
               sort === opt.key
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                ? "bg-ink text-white border-ink"
+                : "bg-surface text-gray-700 border-line hover:border-brand hover:text-brand"
             }`}
           >
             {opt.label}
@@ -275,16 +276,16 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           aria-label="Pagination"
           className="flex items-center justify-center gap-2 py-6"
         >
-          {/* Previous page */}
+          {/* Previous page — active state uses the surface/brand palette; disabled stays muted. */}
           {page > 1 ? (
             <Link
               href={buildUrl(sort, page - 1)}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
             >
               {t("prev")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-gray-200 rounded text-gray-300">
+            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
               {t("prev")}
             </span>
           )}
@@ -294,16 +295,16 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             {t("pageOf", { current: page, total: totalPages })}
           </span>
 
-          {/* Next page */}
+          {/* Next page — active state uses the surface/brand palette; disabled stays muted. */}
           {page < totalPages ? (
             <Link
               href={buildUrl(sort, page + 1)}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
             >
               {t("next")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-gray-200 rounded text-gray-300">
+            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
               {t("next")}
             </span>
           )}
