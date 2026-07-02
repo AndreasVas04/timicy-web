@@ -18,7 +18,14 @@ export function LocaleSwitcher() {
   const label = otherLocale === "en" ? "EN" : "EL";
 
   function handleSwitch() {
-    router.replace(pathname, { locale: otherLocale });
+    // usePathname (next-intl) returns the path WITHOUT the query string, so a
+    // plain replace(pathname) silently drops ?q= / ?sort= / ?page= when the
+    // user switches language. Read the live query string at click time via
+    // window.location (safe: click handlers only run in the browser). We
+    // deliberately avoid the useSearchParams hook here — in Next 15 it forces
+    // a Suspense boundary / client-side deopt on statically rendered pages,
+    // which is a heavy cost for a value we only need on click.
+    router.replace(`${pathname}${window.location.search}`, { locale: otherLocale });
   }
 
   return (
