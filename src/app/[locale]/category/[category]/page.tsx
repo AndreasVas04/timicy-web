@@ -10,6 +10,7 @@ import {
   CATEGORY_SLUGS,
   type CategorySlug,
 } from "@/lib/categories";
+import Image from "next/image";
 import { buildProductSlug } from "@/lib/slug";
 import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
@@ -221,12 +222,15 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
               >
                 {/* Image area: soft neutral backdrop; subtle zoom on hover for tactile feedback. */}
                 <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
+                  {/* next/image with `fill` — lazy-loads by default;
+                      `unoptimized` in next.config.ts avoids Vercel proxy costs. */}
                   {product.image_url ? (
-                    <img
+                    <Image
                       src={product.image_url}
                       alt={decodeEntities(product.canonical_title)}
-                      className="max-w-full max-h-full object-contain transition-transform duration-200 group-hover:scale-[1.03]"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-contain transition-transform duration-200 group-hover:scale-[1.03]"
                     />
                   ) : (
                     <span className="text-gray-400 text-xs">No image</span>

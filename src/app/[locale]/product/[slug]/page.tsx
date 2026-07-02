@@ -13,6 +13,7 @@ import { reconstructCheapestSeries } from "@/lib/price-history/reconstruct";
 import { routing } from "@/i18n/routing";
 import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
+import Image from "next/image";
 import PriceAlertForm from "@/components/PriceAlertForm";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 
@@ -205,12 +206,16 @@ export default async function ProductPage({ params }: PageProps) {
       {/* Product header */}
       <div className="flex flex-col sm:flex-row gap-6 mb-8">
         {/* Product image with fallback */}
-        <div className="w-full sm:w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+        {/* Product image — `relative` enables next/image `fill` mode;
+            `unoptimized` in next.config.ts avoids Vercel proxy costs. */}
+        <div className="relative w-full sm:w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
           {product.image_url ? (
-            <img
+            <Image
               src={product.image_url}
               alt={decodeEntities(product.canonical_title)}
-              className="max-w-full max-h-full object-contain"
+              fill
+              sizes="(max-width: 640px) 100vw, 256px"
+              className="object-contain p-2"
             />
           ) : (
             <span className="text-gray-400 text-sm">No image</span>

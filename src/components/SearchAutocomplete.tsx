@@ -10,6 +10,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { buildProductSlug } from "@/lib/slug";
@@ -279,12 +280,9 @@ export function SearchAutocomplete({
                 >
                   {/* Product image with fallback for null image_url */}
                   <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-gray-100">
+                    {/* Thumbnail — fixed 40×40, no `fill` needed. */}
                     {result.image_url ? (
-                      <img
-                        src={result.image_url}
-                        alt=""
-                        className="h-full w-full object-contain"
-                      />
+                      <Image src={result.image_url} alt="" width={40} height={40} className="h-full w-full object-contain" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-gray-300">
                         <svg

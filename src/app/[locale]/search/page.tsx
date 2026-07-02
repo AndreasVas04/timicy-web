@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { buildProductSlug } from "@/lib/slug";
 import { decodeEntities } from "@/lib/decode-entities";
@@ -123,13 +124,16 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                            transition-all duration-200 hover:border-brand hover:shadow-md hover:-translate-y-0.5"
               >
                 {/* Image area: soft neutral backdrop; subtle zoom on hover for tactile feedback. */}
+                {/* next/image with `fill` — lazy-loads by default;
+                    `unoptimized` in next.config.ts avoids Vercel proxy costs. */}
                 <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
                   {product.image_url ? (
-                    <img
+                    <Image
                       src={product.image_url}
                       alt={decodeEntities(product.canonical_title)}
-                      className="max-w-full max-h-full object-contain transition-transform duration-200 group-hover:scale-[1.03]"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-contain transition-transform duration-200 group-hover:scale-[1.03]"
                     />
                   ) : (
                     <span className="text-gray-400 text-xs">No image</span>
