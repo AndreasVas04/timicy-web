@@ -2,8 +2,8 @@
  * Shared Open Graph constants used across all page metadata generators.
  */
 
-// Temporary OG image; design pass will replace with a proper 1200×630 branded banner.
-export const OG_FALLBACK_IMAGE = "/TimiCY_logo.png";
+// Branded 1200×630 social-share banner, generated on the /og route via next/og.
+export const OG_FALLBACK_IMAGE = "/og";
 
 /**
  * Map internal locale codes to OpenGraph-standard locale strings.
