@@ -15,7 +15,7 @@ import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
 import Image from "next/image";
 import PriceAlertForm from "@/components/PriceAlertForm";
-import PriceHistoryChart from "@/components/PriceHistoryChart";
+import PriceHistoryChart from "@/components/PriceHistoryChartLazy";
 
 /**
  * On-demand ISR: product pages are not pre-built (no generateStaticParams).
