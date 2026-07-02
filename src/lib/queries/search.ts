@@ -26,7 +26,9 @@ export async function getSearchResults({
     brand: string;
     image_url: string | null;
     min_price: number;
+    max_price: number | null;
     offer_count: number;
+    store_count: number;
   }[];
   total: number;
 }> {

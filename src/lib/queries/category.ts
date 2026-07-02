@@ -55,6 +55,7 @@ export const getCategoryProducts = unstable_cache(
       min_price: number | null;
       max_price: number | null;
       offer_count: number;
+      store_count: number;
     }[];
     total: number;
   }> => {
@@ -67,7 +68,7 @@ export const getCategoryProducts = unstable_cache(
     let query = supabase
       .from("products")
       .select(
-        "id, canonical_title, brand, image_url, min_price, max_price, offer_count",
+        "id, canonical_title, brand, image_url, min_price, max_price, offer_count, store_count",
         { count: "exact" }
       )
       .eq("category", category);

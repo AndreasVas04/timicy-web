@@ -215,52 +215,53 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             <li key={product.id}>
               <Link
                 href={`/product/${buildProductSlug(product.id, product.canonical_title)}`}
-                className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow h-full"
+                className="group flex flex-col h-full bg-surface border border-line rounded-xl overflow-hidden
+                           transition-all duration-200 hover:border-brand hover:shadow-md hover:-translate-y-0.5"
               >
-                {/* Product image with fallback */}
-                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                {/* Image area: soft neutral backdrop; subtle zoom on hover for tactile feedback. */}
+                <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
                       alt={decodeEntities(product.canonical_title)}
-                      className="max-w-full max-h-full object-contain"
+                      className="max-w-full max-h-full object-contain transition-transform duration-200 group-hover:scale-[1.03]"
                       loading="lazy"
                     />
                   ) : (
                     <span className="text-gray-400 text-xs">No image</span>
                   )}
+                  {/* Savings chip: only when the product is genuinely cheaper somewhere (2+ stores, price spread). */}
+                  {product.store_count >= 2 &&
+                    product.max_price != null &&
+                    product.min_price != null &&
+                    Number(product.max_price) > Number(product.min_price) && (
+                      <span className="absolute top-2 left-2 rounded-md bg-save px-2 py-0.5 text-xs font-medium text-white">
+                        −€{(Number(product.max_price) - Number(product.min_price)).toFixed(0)}
+                      </span>
+                    )}
                 </div>
 
-                <div className="p-3 flex flex-col gap-1">
-                  {/* Brand */}
+                <div className="flex flex-col gap-1 p-3 grow">
                   {product.brand && (
-                    <span className="text-xs text-gray-500 uppercase tracking-wide">
-                      {product.brand}
-                    </span>
+                    <span className="text-xs uppercase tracking-wide text-gray-500">{product.brand}</span>
                   )}
-
-                  {/* Title — decode HTML entities for clean display */}
-                  <span className="text-sm font-medium line-clamp-2">
+                  <span className="text-sm font-medium text-ink line-clamp-2">
                     {decodeEntities(product.canonical_title)}
                   </span>
 
-                  {/* Price */}
-                  {product.min_price != null ? (
-                    <span className="text-sm font-semibold text-green-700">
-                      {t("fromPrice", {
-                        price: `€${Number(product.min_price).toFixed(2)}`,
-                      })}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-400">—</span>
-                  )}
-
-                  {/* Store count */}
-                  {product.offer_count > 0 && (
-                    <span className="text-xs text-gray-500">
-                      {t("inStores", { count: product.offer_count })}
-                    </span>
-                  )}
+                  {/* Price block pushed to the card bottom so all cards align in the grid row. */}
+                  <div className="mt-auto pt-1">
+                    {product.min_price != null ? (
+                      <span className="block text-lg font-semibold text-price tabular-nums">
+                        {t("fromPrice", { price: `€${Number(product.min_price).toFixed(2)}` })}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                    {product.store_count > 0 && (
+                      <span className="text-xs text-gray-500">{t("inStores", { count: product.store_count })}</span>
+                    )}
+                  </div>
                 </div>
               </Link>
             </li>
