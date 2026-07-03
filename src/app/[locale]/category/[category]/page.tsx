@@ -22,10 +22,10 @@ import {
 
 /**
  * ISR: category pages are pre-rendered for all 21 categories × 2 locales.
- * Revalidate every hour as a baseline; on-demand revalidation via a webhook
- * will be added later so listings refresh when the scraper updates data.
+ * The cache is refreshed on-demand by the nightly pipeline's revalidation
+ * webhook; the 24 h window is only a fallback ceiling.
  */
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 /* -------------------------------------------------------------------------- */
 /*  Types for async params/searchParams (Next.js 15 App Router convention)    */

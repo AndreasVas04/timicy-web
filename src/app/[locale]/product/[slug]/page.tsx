@@ -19,11 +19,10 @@ import PriceHistoryChart from "@/components/PriceHistoryChartLazy";
 
 /**
  * On-demand ISR: product pages are not pre-built (no generateStaticParams).
- * Revalidate cached pages every hour as a baseline.
- * On-demand revalidation via a webhook will be added later so prices refresh
- * when the scraper updates data.
+ * The cache is refreshed on-demand by the nightly pipeline's revalidation
+ * webhook; the 24 h window is only a fallback ceiling.
  */
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 /* -------------------------------------------------------------------------- */
 /*  Types for async params (Next.js 15 App Router convention)                 */
