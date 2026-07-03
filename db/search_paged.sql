@@ -50,6 +50,8 @@ as $$
       p.max_price,
       p.offer_count,
       p.store_count,
+      -- Availability flag: used ONLY for ordering (two-tier demote), not returned.
+      p.has_available_offer,
       -- Prefix match ranks higher than mid-string match.
       (case when p.canonical_title ilike q || '%' then 1 else 0 end) as prefix_rank,
       -- Substring match anywhere in the title.
@@ -71,9 +73,8 @@ as $$
     -- total for pagination math (total_pages = ceil(total_count / page_size)).
     count(*) over() as total_count
   from matches m
-  -- Relevance ordering: prefix matches first, then substring matches,
-  -- then by trigram similarity, finally by popularity (offer count).
-  order by m.prefix_rank desc, m.substr_rank desc, m.sim desc, m.offer_count desc nulls last
+  -- Two-tier ordering (mirrors category listings): products with at least one available offer rank before all-unavailable ones; within each tier the original relevance ordering applies (prefix, substring, similarity, popularity).
+  order by m.has_available_offer desc, m.prefix_rank desc, m.substr_rank desc, m.sim desc, m.offer_count desc nulls last
   -- Clamp max_results between 1 and 100 to prevent abuse.
   limit greatest(1, least(max_results, 100))
   -- Clamp offset to non-negative.
