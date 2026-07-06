@@ -87,12 +87,12 @@ export default async function LocaleLayout({
               can be absolutely positioned below the header bar. */}
           <header className="relative bg-surface border-b border-line">
             <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
-              {/* Logo links to the homepage. The source image has been
-                  trimmed to remove transparent padding (cropped native size:
-                  1193×303, aspect ratio ≈ 3.94). Displayed at 157×40 to fit
-                  the header bar while preserving the exact aspect ratio.
-                  `priority` is set because this is above-the-fold on every
-                  page, which improves Largest Contentful Paint (LCP). */}
+              {/* Logo links to the homepage. The source image is a
+                  471×120 truecolor+alpha PNG — exactly 3× the displayed
+                  157×40 size (same ≈ 3.94 aspect ratio) — so the logo
+                  stays sharp on high-DPI / Retina screens. Displayed at
+                  157×40 to fit the header bar. `priority` is set because
+                  the logo is above-the-fold on every page (LCP). */}
               <Link href="/" className="shrink-0">
                 <Image
                   src="/TimiCY_logo.png"
