@@ -24,10 +24,19 @@ type PageProps = {
  * Search result pages are noindex, follow — we don't want Google to index
  * the infinite set of ?q= URLs (which would dilute crawl budget and create
  * thin content), but we do want it to follow product links found on the page.
+ *
+ * The title is loaded from the "search" message namespace so it renders in
+ * the correct language for the current locale (e.g. "Αναζήτηση προϊόντων"
+ * for Greek, "Product search" for English).
  */
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "search" });
+
   return {
-    title: "Search — TimiCY",
+    title: t("metaTitle"),
     robots: { index: false, follow: true },
   };
 }

@@ -74,7 +74,9 @@ export async function generateMetadata({
     languages[loc] = `/${loc}/category/${category}`;
   }
 
-  const title = `${label} — TimiCY`;
+  // Use the localized title template from messages so the title is
+  // translated for each locale (e.g. "Τηλεοράσεις — Σύγκριση Τιμών …").
+  const title = t("metaTitle", { category: label });
   const description = t("metaDescription", { category: label });
 
   return {

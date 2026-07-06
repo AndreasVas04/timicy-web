@@ -63,8 +63,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // in browser tabs, search results, and social previews.
   const decodedTitle = decodeEntities(product.canonical_title);
 
-  const title = `${decodedTitle} — TimiCY`;
-  const description = t("metaDescription", { title: decodedTitle });
+  // Localized title from the message template (e.g. "{title} — Τιμή στην Κύπρο | TimiCY").
+  const title = t("metaTitle", { title: decodedTitle });
+
+  // Fetch offers (render-deduplicated via cache() — the page component
+  // calls the same function and shares the result within this render).
+  const offers = await getOffersForProduct(id);
+
+  // Find the cheapest available offer — same logic as the page component:
+  // first offer with available === true and a non-null price (the list is
+  // already sorted cheapest-first by dedupeOffersByStore).
+  const bestOffer = offers.find(
+    (o) => o.available && o.current_price != null
+  );
+
+  // When we have a best price, build a richer meta description that
+  // includes the starting price and store count. Otherwise fall back
+  // to the generic description template.
+  const description = bestOffer
+    ? t("metaDescriptionWithPrice", {
+        title: decodedTitle,
+        price: `€${Number(bestOffer.current_price).toFixed(2)}`,
+        count: offers.length,
+      })
+    : t("metaDescription", { title: decodedTitle });
   const selfUrl = `/${locale}/product/${canonicalSlug}`;
 
   // Use the product's own image for social previews; fall back to the site

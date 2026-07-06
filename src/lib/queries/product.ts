@@ -155,14 +155,18 @@ function pickRepresentative<
  * Fetch all store offers linked to a product, de-duplicated to one
  * representative per store and sorted cheapest-first.
  *
- * Wrapped in unstable_cache so offer data is served from the Data Cache
- * until the 'catalog' tag is revalidated. The productId argument is
- * serialized into the cache key automatically by unstable_cache.
+ * Two layers of caching (same pattern as getProductById):
  *
- * Does NOT use React cache() — offers are only fetched once by the page
- * component, and generateMetadata doesn't need them.
+ * 1. unstable_cache (Next.js Data Cache): persists the Supabase response
+ *    across requests until the 'catalog' tag is revalidated or the time
+ *    backstop expires.
+ *
+ * 2. React cache(): deduplicates calls within a single server render so
+ *    generateMetadata (which now needs the best price for the meta
+ *    description) and the page component share one lookup instead of two.
  */
-export const getOffersForProduct = unstable_cache(
+export const getOffersForProduct = cache(
+  unstable_cache(
   async (productId: number) => {
     const supabase = createAnonClient();
 
@@ -193,4 +197,5 @@ export const getOffersForProduct = unstable_cache(
     // page-level revalidate.
     revalidate: 3600,
   }
+  )
 );

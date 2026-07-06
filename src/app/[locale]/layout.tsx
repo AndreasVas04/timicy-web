@@ -49,6 +49,10 @@ const allowIndexing = process.env.ALLOW_INDEXING === "true";
  */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  // Default title fallback — any page without its own generateMetadata will
+  // render "TimiCY" as the <title>. The `template: "%s"` format string
+  // passes page-level titles through unchanged (no wrapping suffix).
+  title: { default: "TimiCY", template: "%s" },
   ...(allowIndexing ? {} : { robots: { index: false, follow: false } }),
 };
 
@@ -77,7 +81,6 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const messages = await getMessages();
-  const t = await getTranslations("nav");
 
   return (
     <html lang={locale} className={`${inter.variable} ${manrope.variable}`}>

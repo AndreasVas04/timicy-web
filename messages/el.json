@@ -24,7 +24,8 @@
     "prev": "Προηγούμενη",
     "next": "Επόμενη",
     "pageOf": "Σελίδα {current} από {total}",
-    "metaDescription": "Σύγκρινε τιμές για {category} σε κυπριακά καταστήματα. Βρες τις καλύτερες προσφορές στο TimiCY.",
+    "metaTitle": "{category} — Σύγκριση Τιμών στην Κύπρο | TimiCY",
+    "metaDescription": "Σύγκρινε τιμές για {category} από κυπριακά καταστήματα ηλεκτρονικών. Δες διαθεσιμότητα, ιστορικό τιμών και βρες τη φθηνότερη προσφορά στο TimiCY.",
     "browseCategories": "Κατηγορίες",
     "unavailable": "Μη διαθέσιμο",
     "noImage": "Χωρίς εικόνα"
@@ -43,7 +44,9 @@
     "atStore": "στο {store}",
     "saveVsMax": "έως €{amount} φθηνότερα από το ακριβότερο κατάστημα",
     "noOffers": "Δεν υπάρχουν προσφορές για αυτό το προϊόν",
-    "metaDescription": "Σύγκρινε τιμές για {title} σε κυπριακά καταστήματα. Βρες την καλύτερη προσφορά στο TimiCY.",
+    "metaTitle": "{title} — Τιμή στην Κύπρο | TimiCY",
+    "metaDescriptionWithPrice": "{title} από {price} σε {count, plural, one {# κατάστημα} other {# καταστήματα}} στην Κύπρο. Σύγκρινε τιμές και δες ιστορικό τιμών στο TimiCY.",
+    "metaDescription": "Σύγκρινε τιμές για {title} σε κυπριακά καταστήματα. Δες διαθεσιμότητα και ιστορικό τιμών στο TimiCY.",
     "priceHistory": "Ιστορικό τιμής",
     "noPriceHistory": "Δεν υπάρχουν ακόμα δεδομένα ιστορικού τιμής.",
     "unavailable": "Μη διαθέσιμο",
@@ -55,6 +58,7 @@
     "rangeAll": "Όλα"
   },
   "search": {
+    "metaTitle": "Αναζήτηση προϊόντων — TimiCY",
     "placeholder": "Αναζήτηση προϊόντος...",
     "noResults": "Δεν βρέθηκαν αποτελέσματα",
     "loading": "Αναζήτηση…",
