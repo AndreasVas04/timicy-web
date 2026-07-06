@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "external.webstorage.gr" },
       { protocol: "https", hostname: "asset.productmarketingcloud.com" },
       { protocol: "https", hostname: "asset-prod1a-euw.productmarketingcloud.com" },
+      { protocol: "https", hostname: "assets.kotsovolos.gr" },
       { protocol: "https", hostname: "electroline.cy" },
       { protocol: "https", hostname: "data.electroline.cy" },
       { protocol: "https", hostname: "storage.googleapis.com" },
