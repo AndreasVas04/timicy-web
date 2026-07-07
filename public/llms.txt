@@ -1,0 +1,38 @@
+# TimiCY
+
+> TimiCY is a free price-comparison website for the Cypriot electronics market. It tracks prices across six local retailers — iStorm, Kotsovolos, Stephanis, Electroline, Public, and Bionic — covering 21 product categories, with daily price updates and per-product price history.
+
+TimiCY does not sell products. Every product page lists the current price at each store with a direct link to the retailer, marks availability per store, and shows the historical lowest-price trend. Prices are in EUR. The site is available in Greek (default) and English; Greek pages live under /el/ and English pages under /en/.
+
+## Main pages
+
+- [Homepage (Greek)](https://timicy.com/el): Search and category entry point
+- [Homepage (English)](https://timicy.com/en): English-language version
+
+## Product categories
+
+- [Smartphones](https://timicy.com/el/category/smartphones)
+- [Laptops](https://timicy.com/el/category/laptops)
+- [Tablets](https://timicy.com/el/category/tablets)
+- [Desktops](https://timicy.com/el/category/desktops)
+- [Monitors](https://timicy.com/el/category/monitors)
+- [TVs](https://timicy.com/el/category/tvs)
+- [Headphones](https://timicy.com/el/category/headphones)
+- [Speakers](https://timicy.com/el/category/speakers)
+- [Cameras](https://timicy.com/el/category/cameras)
+- [Consoles](https://timicy.com/el/category/consoles)
+- [Smartwatches](https://timicy.com/el/category/smartwatches)
+- [Smart home](https://timicy.com/el/category/smart_home)
+- [Washing machines](https://timicy.com/el/category/washing_machines)
+- [Dryers](https://timicy.com/el/category/dryers)
+- [Dishwashers](https://timicy.com/el/category/dishwashers)
+- [Refrigerators](https://timicy.com/el/category/refrigerators)
+- [Ovens](https://timicy.com/el/category/ovens)
+- [Air conditioners](https://timicy.com/el/category/air_conditioners)
+- [Air fryers](https://timicy.com/el/category/air_fryers)
+- [Coffee machines](https://timicy.com/el/category/coffee_machines)
+- [Vacuums](https://timicy.com/el/category/vacuums)
+
+## Optional
+
+- [Sitemap](https://timicy.com/sitemap.xml): Full URL inventory including all product pages
