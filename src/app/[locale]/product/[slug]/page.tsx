@@ -13,6 +13,8 @@ import { reconstructCheapestSeries } from "@/lib/price-history/reconstruct";
 import { routing } from "@/i18n/routing";
 import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
+import { SITE_URL } from "@/lib/site-url";
+import { buildProductJsonLd } from "@/lib/structured-data";
 import Image from "next/image";
 import PriceAlertForm from "@/components/PriceAlertForm";
 import PriceHistoryChart from "@/components/PriceHistoryChartLazy";
@@ -173,6 +175,12 @@ export default async function ProductPage({ params }: PageProps) {
 
   const offers = await getOffersForProduct(id);
 
+  // Build the absolute product URL and the schema.org JSON-LD structured
+  // data object.  buildProductJsonLd returns null when no priced offers
+  // exist, in which case we skip rendering the <script> tag entirely.
+  const productUrl = `${SITE_URL}/${locale}/product/${canonical}`;
+  const jsonLd = buildProductJsonLd({ product, offers, productUrl });
+
   // Fetch raw price-history events and reconstruct the cheapest-per-day
   // time-series.  Reconstruction runs OUTSIDE the cached read, on every
   // render, so the now-edge stays current — this is intentional.
@@ -224,6 +232,18 @@ export default async function ProductPage({ params }: PageProps) {
 
   return (
     <article>
+      {/* Schema.org Product + AggregateOffer structured data for rich
+          search results.  The .replace() escapes '<' as \u003c to prevent
+          a crafted product title from breaking out of the script tag. */}
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
+
       {/* Product header */}
       <div className="flex flex-col sm:flex-row gap-6 mb-8">
         {/* Product image with fallback */}
