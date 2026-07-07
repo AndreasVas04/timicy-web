@@ -14,6 +14,7 @@ import Image from "next/image";
 import { buildProductSlug } from "@/lib/slug";
 import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
+import { parsePageParam } from "@/lib/page-param";
 import {
   getCategoryProducts,
   isValidSort,
@@ -52,32 +53,48 @@ export function generateStaticParams() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: PageProps): Promise<Metadata> {
   const { locale, category } = await params;
+  const search = await searchParams;
 
   if (!isValidCategory(category)) return {};
 
   const t = await getTranslations({ locale, namespace: "category" });
   const label = getCategoryLabel(category, locale);
 
-  // Canonical URL excludes sort/page params — those are crawlable variants
-  // but canonical should point to the clean category URL so search engines
-  // consolidate link equity on a single canonical page.
-  const canonicalPath = `/${locale}/category/${category}`;
+  // Determine the current page so paginated views get their own canonical.
+  // The sort parameter is intentionally NOT read here — sorted variants
+  // show the same content in a different order, so they should all
+  // consolidate onto the same canonical URL per page.
+  const page = parsePageParam(search.page);
+  const pageSuffix = page > 1 ? `?page=${page}` : "";
+
+  // Canonical URL includes ?page=N for page ≥ 2 so search engines treat
+  // each paginated view as its own indexable page.  Page 1 gets the clean
+  // URL (no query string) for maximum link-equity consolidation.
+  const canonicalPath = `/${locale}/category/${category}${pageSuffix}`;
 
   // Build hreflang alternates for every supported locale.
   // x-default points to the Greek (primary) version of this category.
+  // Each alternate carries the same page suffix so crawlers associate
+  // the correct paginated view across locales.
   const languages: Record<string, string> = {
-    "x-default": `/el/category/${category}`,
+    "x-default": `/el/category/${category}${pageSuffix}`,
   };
   for (const loc of routing.locales) {
-    languages[loc] = `/${loc}/category/${category}`;
+    languages[loc] = `/${loc}/category/${category}${pageSuffix}`;
   }
 
   // Use the localized title template from messages so the title is
   // translated for each locale (e.g. "Τηλεοράσεις — Σύγκριση Τιμών …").
   const title = t("metaTitle", { category: label });
   const description = t("metaDescription", { category: label });
+
+  // Open Graph url stays on the clean path (no page suffix) — social
+  // previews don't need pagination; the shared link should always
+  // land on the first page of the category.
+  const ogUrl = `/${locale}/category/${category}`;
 
   return {
     title,
@@ -91,7 +108,7 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      url: canonicalPath,
+      url: ogUrl,
       siteName: "TimiCY",
       locale: OG_LOCALE[locale] ?? "el_CY",
       type: "website",
@@ -130,9 +147,10 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const sort: CategorySort =
     search.sort && isValidSort(search.sort) ? search.sort : "popular";
 
-  // Parse page number; clamp to >= 1.
-  let page = parseInt(search.page ?? "1", 10);
-  if (!Number.isFinite(page) || page < 1) page = 1;
+  // Parse page number; clamp to >= 1.  Uses the shared parsePageParam
+  // helper so the page component and generateMetadata always agree on
+  // which page is being rendered (prevents canonical URL mismatches).
+  let page = parsePageParam(search.page);
 
   // Fetch products for this category, page, and sort order.
   const { rows: products, total } = await getCategoryProducts({
