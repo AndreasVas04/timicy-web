@@ -9,6 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { CategoriesDropdown } from "@/components/CategoriesDropdown";
+import { NavigationTracker } from "@/components/NavigationTracker";
 import { Inter, Manrope } from "next/font/google";
 import "@/app/globals.css";
 
@@ -88,6 +89,12 @@ export default async function LocaleLayout({
           ink as headings and prices, with mute/faint tokens for hierarchy. */}
       <body className="min-h-screen flex flex-col bg-page text-ink">
         <NextIntlClientProvider messages={messages}>
+          {/* Tracks in-site navigation for the BackLink component.
+              Sets a sessionStorage flag after the first client-side
+              navigation so BackLink can distinguish returning visitors
+              from direct arrivals. Renders nothing. */}
+          <NavigationTracker />
+
           {/* Site header — sticky so search and navigation stay reachable
               while scrolling. `sticky` is a positioned box, so the mobile
               search panel can still be absolutely positioned below the
@@ -97,13 +104,18 @@ export default async function LocaleLayout({
               "index line": a small constant marker on every page. */}
           <header className="sticky top-0 z-40 bg-surface border-b border-line">
             <div aria-hidden="true" className="h-[3px] bg-brand" />
-            <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-3.5">
+            {/* Header inner container — tighter horizontal padding on narrow
+                viewports (px-3 below sm, px-4 at sm+) so header controls
+                have breathing room at 375px, especially with longer Greek
+                labels like "Κατηγορίες". */}
+            <div className="mx-auto max-w-6xl flex items-center justify-between px-3 sm:px-4 py-3.5">
               {/* Logo links to the homepage. The source image is a
                   471×120 truecolor+alpha PNG — exactly 3× the displayed
                   157×40 size (same ≈ 3.94 aspect ratio) — so the logo
-                  stays sharp on high-DPI / Retina screens. Displayed at
-                  157×40 to fit the header bar. `priority` is set because
-                  the logo is above-the-fold on every page (LCP). */}
+                  stays sharp on high-DPI / Retina screens. Scaled down
+                  to h-8 (32px) on mobile for a snugger fit, full h-10
+                  (40px) at sm+. `priority` is set because the logo is
+                  above-the-fold on every page (LCP). */}
               <Link href="/" className="shrink-0">
                 <Image
                   src="/TimiCY_logo.png"
@@ -111,6 +123,7 @@ export default async function LocaleLayout({
                   width={157}
                   height={40}
                   priority
+                  className="h-8 sm:h-10 w-auto"
                 />
               </Link>
 
@@ -118,10 +131,11 @@ export default async function LocaleLayout({
                   HeaderSearch is a client component that wraps SearchAutocomplete. */}
               <HeaderSearch />
 
-              {/* Right-side navigation: categories dropdown, a hairline divider, then the locale
-                  switcher. The divider gives the two controls clear separation so they no longer
-                  feel cramped together. */}
-              <div className="flex items-center gap-4 shrink-0">
+              {/* Right-side navigation: categories dropdown, a hairline divider,
+                  then the locale switcher. Tighter gap (gap-2) on narrow
+                  viewports to prevent the Greek "Κατηγορίες" label from
+                  pushing controls off-screen at 375px. */}
+              <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                 <CategoriesDropdown />
                 <span aria-hidden="true" className="h-5 w-px bg-line"></span>
                 <LocaleSwitcher />

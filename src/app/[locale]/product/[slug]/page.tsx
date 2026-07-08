@@ -19,6 +19,7 @@ import { isValidCategory, getCategoryLabel, type CategorySlug } from "@/lib/cate
 import Image from "next/image";
 import PriceAlertForm from "@/components/PriceAlertForm";
 import PriceHistoryChart from "@/components/PriceHistoryChartLazy";
+import { BackLink } from "@/components/BackLink";
 
 /**
  * On-demand ISR: product pages are not pre-built (no generateStaticParams).
@@ -195,6 +196,18 @@ export default async function ProductPage({ params }: PageProps) {
   // cheaper than all available offers.
   const bestOffer = offers.find((o) => o.available && o.current_price != null);
 
+  // Count how many stores share the exact best available price.
+  // When two or more stores tie, the price plate shows a store count
+  // ("at 3 stores") instead of naming a single store, for fairness.
+  const bestPriceStoreCount = bestOffer
+    ? offers.filter(
+        (o) =>
+          o.available &&
+          o.current_price != null &&
+          Number(o.current_price) === Number(bestOffer.current_price)
+      ).length
+    : 0;
+
   // Price range across AVAILABLE offers — shown as a quiet factual note
   // below the price plate. Only meaningful when 2+ stores have a price
   // and the spread is non-zero (min != max).
@@ -251,6 +264,11 @@ export default async function ProductPage({ params }: PageProps) {
         />
       )}
 
+      {/* Back link — returns visitor to the previous page (preserving
+          filters and scroll) or falls back to the category listing. Only
+          rendered when the product has an assigned category. */}
+      {product.category && <BackLink categorySlug={product.category} />}
+
       {/* Product header */}
       <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 mb-10">
         {/* Product image on a white sheet with a hairline border.
@@ -293,7 +311,14 @@ export default async function ProductPage({ params }: PageProps) {
               <p className="price-figure mt-1 text-4xl sm:text-5xl font-extrabold text-white">
                 €{Number(bestOffer.current_price).toFixed(2)}
               </p>
-              <p className="text-sm text-ink-soft mt-2">{t("atStore", { store: bestOffer.store })}</p>
+              {/* Store attribution: when multiple stores share the best
+                  price, show a neutral count instead of naming one store
+                  (fairness). Otherwise name the single cheapest store. */}
+              <p className="text-sm text-ink-soft mt-2">
+                {bestPriceStoreCount > 1
+                  ? t("atStoresCount", { count: bestPriceStoreCount })
+                  : t("atStore", { store: bestOffer.store })}
+              </p>
               {/* Price range: same treatment as the store line, tabular
                   figures, shown only for a real spread (2+ priced stores,
                   min != max). */}

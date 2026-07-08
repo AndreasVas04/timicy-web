@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { SortSelect } from "@/components/SortSelect";
 import {
   isValidCategory,
   getCategoryLabel,
@@ -207,29 +208,19 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{label}</h1>
 
-        {/* Sort controls — plain links, no client JS required. Rendered
-            as a single segmented control (one bordered box, hairline
-            dividers) instead of floating pills: a data-tool affordance. */}
-        <nav aria-label={t("sortLabel")} className="flex items-center gap-3">
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-faint">
-            {t("sortLabel")}
-          </span>
-          <div className="inline-flex divide-x divide-line overflow-hidden rounded-md border border-line bg-surface">
-            {sortOptions.map((opt) => (
-              <Link
-                key={opt.key}
-                href={buildUrl(opt.key, 1)}
-                className={`px-3 py-1.5 text-sm transition-colors ${
-                  sort === opt.key
-                    ? "bg-ink font-medium text-white"
-                    : "text-mute hover:bg-page hover:text-ink"
-                }`}
-              >
-                {opt.label}
-              </Link>
-            ))}
-          </div>
-        </nav>
+        {/* Sort dropdown — a native <select> replaces the previous
+            segmented control, which overflowed at 375px with the longer
+            Greek labels. The dropdown handles long text gracefully on
+            every viewport width and platform. */}
+        <SortSelect
+          label={t("sortLabel")}
+          options={sortOptions.map((opt) => ({
+            value: opt.key,
+            label: opt.label,
+            href: buildUrl(opt.key, 1),
+          }))}
+          currentValue={sort}
+        />
       </div>
 
       {/* Empty state: quiet message on a dashed sheet. */}

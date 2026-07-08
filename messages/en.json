@@ -75,7 +75,9 @@
     "range6mo": "6 months",
     "rangeYear": "Year",
     "rangeAll": "All",
-    "noImage": "No image"
+    "noImage": "No image",
+    "backLabel": "Back",
+    "atStoresCount": "at {count} stores"
   },
   "search": {
     "metaTitle": "Product search — TimiCY",

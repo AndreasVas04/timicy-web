@@ -97,7 +97,11 @@ export const getMergedRedirectTarget = unstable_cache(
  *     unavailable offers.
  *  3. A null current_price is treated as +Infinity (never preferred).
  *
- * The returned list is sorted by current_price ascending, nulls last.
+ * The returned list is sorted for neutral, deterministic display:
+ *   1. Available offers first (unavailable offers sink to the bottom).
+ *   2. Ascending price within each availability tier (nulls last).
+ *   3. Alphabetical store name as the final tie-break, so stores at
+ *      the same price appear in a predictable, fair order.
  *
  * NOTE: A future enhancement may add a "from €X" hint when a store has
  * multiple variants at different prices. This is deferred for now.
@@ -125,12 +129,29 @@ function dedupeOffersByStore<
 
   const representatives = Array.from(byStore.values());
 
-  // Sort by current_price ascending, nulls last.
+  // Sort: available first, then price ascending (nulls last), then
+  // store name alphabetical as the final tie-break for fairness.
   representatives.sort((a, b) => {
-    if (a.current_price == null && b.current_price == null) return 0;
-    if (a.current_price == null) return 1;
-    if (b.current_price == null) return -1;
-    return Number(a.current_price) - Number(b.current_price);
+    // 1. Available offers always appear before unavailable ones.
+    if (a.available && !b.available) return -1;
+    if (!a.available && b.available) return 1;
+
+    // 2. Price ascending within the same availability tier; null
+    //    prices (unknown) sink to the end.
+    if (a.current_price == null && b.current_price == null) {
+      // Both null — fall through to store-name tie-break.
+    } else if (a.current_price == null) {
+      return 1;
+    } else if (b.current_price == null) {
+      return -1;
+    } else {
+      const diff = Number(a.current_price) - Number(b.current_price);
+      if (diff !== 0) return diff;
+    }
+
+    // 3. Alphabetical store name — deterministic, neutral ordering
+    //    when price and availability are identical.
+    return a.store.localeCompare(b.store);
   });
 
   return representatives;

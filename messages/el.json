@@ -75,7 +75,9 @@
     "range6mo": "6 μήνες",
     "rangeYear": "Έτος",
     "rangeAll": "Όλα",
-    "noImage": "Χωρίς εικόνα"
+    "noImage": "Χωρίς εικόνα",
+    "backLabel": "Πίσω",
+    "atStoresCount": "σε {count} καταστήματα"
   },
   "search": {
     "metaTitle": "Αναζήτηση προϊόντων — TimiCY",
