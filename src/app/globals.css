@@ -2,29 +2,45 @@
 @import "tailwindcss";
 
 /*
- * TimiCY design tokens.
- * Brand colors were sampled directly from the logo artwork so the whole
- * site stays visually consistent with the wordmark.
- * Declaring them inside @theme makes each one available BOTH as a CSS
+ * TimiCY design tokens: the "Price Ledger" system.
+ *
+ * One idea drives the whole surface language: the site is a ledger of
+ * prices. Deep navy identity bands carry the brand; content sits on white
+ * "sheets" divided by hairlines; the price is always the loudest element,
+ * set in the heading face with tabular figures. Teal is functional, not
+ * decorative: it marks the interactive layer (links, focus, best-price).
+ *
+ * Declaring tokens inside @theme makes each one available BOTH as a CSS
  * variable (e.g. var(--color-ink)) AND as Tailwind utilities
- * (bg-ink, text-brand, border-line, etc.) that later jobs will use.
+ * (bg-ink, text-brand, border-line, etc.).
  */
 @theme {
   /* Brand palette (from the logo) */
-  --color-ink: #0A2540;          /* deep navy — primary text, headers, primary buttons */
-  --color-brand: #0BA4B4;        /* teal — links, focus rings, interactive accents */
-  --color-brand-hover: #0A93A1;  /* teal, slightly darker — hover state for brand elements */
-  --color-accent: #0A6FB0;       /* mid blue — used sparingly (chart line, secondary accents) */
+  --color-ink: #0A2540;          /* deep navy: primary text, prices, primary buttons */
+  --color-brand: #0BA4B4;        /* teal: links, focus rings, best-price marking */
+  --color-brand-hover: #0A93A1;  /* teal, slightly darker: hover state for brand elements */
+  --color-accent: #0A6FB0;       /* mid blue: reserved secondary accent */
 
   /* Semantic colors */
-  --color-price: #15803D;        /* emerald — reserved for prices / best-price only */
-  --color-save: #E0871E;         /* amber — reserved for savings badges ("save €X") only */
-  --color-save-dark: #B96A12;    /* darker amber — for small savings text where the base amber fails contrast on white */
+  --color-stock: #15803D;        /* green: availability / success states only */
+  --color-save: #E0871E;         /* amber: reserved for savings badges ("save X") only */
+  --color-save-dark: #B96A12;    /* darker amber: small savings text on white surfaces */
 
-  /* Surfaces */
-  --color-page: #F7F8FA;         /* very light cool gray — page background */
-  --color-surface: #FFFFFF;      /* white — cards, header, panels */
-  --color-line: #E4E7EB;         /* hairline border color */
+  /* Surfaces. The page gray is deep enough that white sheets visibly
+     lift off it; hairlines do the rest of the separation work. */
+  --color-page: #EDF1F5;         /* cool gray: page background */
+  --color-surface: #FFFFFF;      /* white: sheets, cards, header */
+  --color-line: #DDE4EB;         /* hairline border color */
+
+  /* Navy-tinted neutrals for secondary text on light surfaces, so even
+     the muted text belongs to the brand palette instead of generic gray. */
+  --color-mute: #51637A;         /* secondary text (labels, body copy) */
+  --color-faint: #7C8DA1;        /* tertiary text (fine print, disabled) */
+
+  /* Dark brand surfaces (the "ledger band" identity) */
+  --color-ink-deep: #071B30;     /* deepest navy: hero, footer, price plate */
+  --color-ink-soft: #94A9BE;     /* desaturated navy: secondary text on dark surfaces */
+  --color-brand-tint: #E7F6F8;   /* teal at ~8%: selected/highlight backgrounds on light surfaces */
 
   /*
    * Font families. next/font injects --font-inter and --font-manrope
@@ -37,11 +53,53 @@
 }
 
 /*
+ * Price figures: every price on the site uses this treatment so amounts
+ * read as one consistent, dominant voice. Heading face, tight tracking,
+ * tabular figures so digits align in lists and never shift on update.
+ */
+@utility price-figure {
+  font-family: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/*
+ * Graph-paper texture for navy identity bands (hero, footer, price plate).
+ * A faint square grid drawn with two hairline gradients: the visual
+ * shorthand for "tracked data" without any imagery. Derived from the
+ * ink-soft token via color-mix so it stays on-palette.
+ */
+@utility grid-paper {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-ink-soft) 11%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-ink-soft) 11%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/*
  * Base-layer defaults. Headings use the Manrope (heading) family; body text
  * inherits the sans (Inter) family automatically from Tailwind's defaults.
  */
 @layer base {
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+  }
+
+  /* Brand-colored text selection: a small, everywhere-visible signature. */
+  ::selection {
+    background-color: var(--color-brand);
+    color: #ffffff;
+  }
+
+  /*
+   * Full-bleed identity bands "break out" of the centered content container
+   * to span the full viewport width (w-screen + centering transform).
+   * Because 100vw includes the vertical scrollbar on some platforms, that
+   * technique can produce a few pixels of horizontal overflow. `clip`
+   * discards it without creating a scroll container, so position: sticky
+   * on the header keeps working (overflow: hidden would break it).
+   */
+  html {
+    overflow-x: clip;
   }
 }

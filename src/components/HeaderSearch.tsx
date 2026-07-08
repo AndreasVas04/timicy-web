@@ -53,7 +53,7 @@ export function HeaderSearch() {
         type="button"
         onClick={() => setMobileOpen((prev) => !prev)}
         aria-label={t("searchToggle")}
-        className="md:hidden p-1.5 text-gray-600 hover:text-brand transition-colors"
+        className="md:hidden p-1.5 text-mute hover:text-brand transition-colors"
       >
         {/* Magnifier icon */}
         <svg
@@ -74,7 +74,7 @@ export function HeaderSearch() {
 
       {/* Mobile: expandable search row below the header bar */}
       {mobileOpen && (
-        <div className="md:hidden absolute left-0 right-0 top-full bg-white border-b border-line px-4 py-2 z-40">
+        <div className="md:hidden absolute left-0 right-0 top-full bg-surface border-b border-line px-4 py-2.5 z-40">
           <SearchAutocomplete instanceId="header-mobile" compact />
         </div>
       )}

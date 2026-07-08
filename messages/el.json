@@ -12,13 +12,24 @@
   },
   "home": {
     "title": "Βρες την καλύτερη τιμή στην Κύπρο",
-    "tagline": "Σύγκρινε τιμές ηλεκτρονικών και οικιακών συσκευών από κυπριακά καταστήματα."
+    "tagline": "Το TimiCY συγκρίνει κάθε βράδυ τις τιμές από iStorm, Kotsovolos, Stephanis, Electroline, Public και Bionic. Δωρεάν και ουδέτερα.",
+    "heroTitle": "Το ίδιο προϊόν. Έξι καταστήματα. Μία καλύτερη τιμή.",
+    "heroSubline": "Το TimiCY συγκρίνει κάθε βράδυ τις τιμές από iStorm, Kotsovolos, Stephanis, Electroline, Public και Bionic. Δωρεάν και ουδέτερα.",
+    "trustStores": "<hl>6</hl> καταστήματα",
+    "trustCategories": "<hl>21</hl> κατηγορίες",
+    "trustUpdated": "Ενημέρωση <hl>κάθε βράδυ</hl>",
+    "categoriesTitle": "Κατηγορίες",
+    "step1Title": "Ψάξε το προϊόν",
+    "step1Text": "Γράψε τι ψάχνεις ή διάλεξε κατηγορία.",
+    "step2Title": "Σύγκρινε τιμές",
+    "step2Text": "Δες ποιο κατάστημα το έχει φθηνότερα.",
+    "step3Title": "Αγόρασε από το κατάστημα",
+    "step3Text": "Σε στέλνουμε απευθείας εκεί."
   },
   "footer": {
     "about": "Πώς λειτουργεί",
     "terms": "Όροι Χρήσης",
     "privacy": "Πολιτική Απορρήτου",
-    "contact": "Επικοινωνία",
     "copyright": "\u00a9 2026 TimiCY."
   },
   "category": {
@@ -34,7 +45,6 @@
     "pageOf": "Σελίδα {current} από {total}",
     "metaTitle": "{category} — Σύγκριση Τιμών στην Κύπρο | TimiCY",
     "metaDescription": "Σύγκρινε τιμές για {category} από κυπριακά καταστήματα ηλεκτρονικών. Δες διαθεσιμότητα, ιστορικό τιμών και βρες τη φθηνότερη προσφορά στο TimiCY.",
-    "browseCategories": "Κατηγορίες",
     "unavailable": "Μη διαθέσιμο",
     "noImage": "Χωρίς εικόνα",
     "paginationLabel": "Σελιδοποίηση"
@@ -51,7 +61,7 @@
     "allUnavailable": "Προσωρινά μη διαθέσιμο σε όλα τα καταστήματα",
     "lastKnownPrice": "Τελευταία γνωστή τιμή",
     "atStore": "στο {store}",
-    "saveVsMax": "έως €{amount} φθηνότερα από το ακριβότερο κατάστημα",
+    "priceRange": "Εύρος τιμών: {min} – {max}",
     "noOffers": "Δεν υπάρχουν προσφορές για αυτό το προϊόν",
     "metaTitle": "{title} — Τιμή στην Κύπρο | TimiCY",
     "metaDescriptionWithPrice": "{title} από {price} σε {count, plural, one {# κατάστημα} other {# καταστήματα}} στην Κύπρο. Σύγκρινε τιμές και δες ιστορικό τιμών στο TimiCY.",

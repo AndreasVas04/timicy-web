@@ -30,7 +30,7 @@ export default function UnsubscribeButton({ token }: { token: string }) {
   }
 
   if (status === "done") {
-    return <p className="text-green-700 font-medium">{t("unsubscribeSuccess")}</p>;
+    return <p className="text-stock font-medium">{t("unsubscribeSuccess")}</p>;
   }
 
   if (status === "error") {
@@ -38,10 +38,12 @@ export default function UnsubscribeButton({ token }: { token: string }) {
   }
 
   return (
+    /* Destructive action stays red (semantic), but adopts the site's
+       tighter corner radius and sizing for buttons. */
     <button
       onClick={handleUnsubscribe}
       disabled={status === "loading"}
-      className="px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="px-6 py-2.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {status === "loading" ? t("processing") : t("unsubscribeButton")}
     </button>

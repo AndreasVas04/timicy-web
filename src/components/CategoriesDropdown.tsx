@@ -57,7 +57,7 @@ export function CategoriesDropdown() {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
-        className="inline-flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-brand transition-colors"
+        className="inline-flex items-center gap-1 text-sm font-medium text-ink hover:text-brand transition-colors"
       >
         {t("categories")}
         {/* Chevron indicates a dropdown; rotates 180deg while the menu is open. */}
@@ -72,8 +72,8 @@ export function CategoriesDropdown() {
 
       {open && (
         <div
-          className="absolute left-0 top-full mt-1 w-56 max-h-80 overflow-y-auto
-                     rounded-lg border border-line bg-white shadow-lg z-50"
+          className="absolute right-0 top-full mt-1.5 w-60 max-h-80 overflow-y-auto
+                     rounded-md border border-line bg-surface shadow-lg z-50"
         >
           <ul role="list" className="py-1">
             {CATEGORY_SLUGS.map((slug) => (
@@ -81,8 +81,7 @@ export function CategoriesDropdown() {
                 <Link
                   href={`/category/${slug}`}
                   onClick={() => setOpen(false)}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-page
-                             hover:text-brand transition-colors"
+                  className="block px-4 py-2 text-sm text-ink hover:bg-brand-tint transition-colors"
                 >
                   {getCategoryLabel(slug, locale)}
                 </Link>

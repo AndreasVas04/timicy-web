@@ -357,16 +357,17 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
 
   return (
     <div>
-      {/* Time-range toggle buttons */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      {/* Time-range toggle: a single segmented control matching the sort
+          control on category pages (one bordered box, hairline dividers). */}
+      <div className="mb-4 inline-flex divide-x divide-line overflow-hidden rounded-md border border-line bg-surface">
         {rangeButtons.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setRange(key)}
-            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+            className={`px-3 py-1.5 text-sm transition-colors ${
               range === key
-                ? "bg-ink text-white border-ink"
-                : "bg-white text-gray-700 border-gray-300 hover:border-brand hover:text-brand"
+                ? "bg-ink font-medium text-white"
+                : "text-mute hover:bg-page hover:text-ink"
             }`}
           >
             {label}
@@ -377,14 +378,20 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
       {/* Chart wrapper — explicit height prevents ResponsiveContainer from
           collapsing to 0px inside flex/grid parents (the most common
           Recharts-in-Next rendering bug).  position:relative so the
-          custom tooltip can be absolutely positioned within it. */}
-      <div className="w-full h-[300px] relative">
-        <ResponsiveContainer width="100%" height={300}>
+          custom tooltip can be absolutely positioned within it.
+          Rendered as a white sheet so the plot area matches the offers
+          ledger above it. */}
+      <div className="w-full h-[300px] relative rounded-lg border border-line bg-surface pt-4 pr-2">
+        {/* height=100% tracks the padded wrapper box (300px minus padding). */}
+        <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            {/* Chart colors are hardcoded (documented token exception for
+                charts): grid/axis use the hairline and faint neutrals,
+                the line uses the brand teal. */}
+            <CartesianGrid strokeDasharray="3 3" stroke="#DDE4EB" />
 
             {/* X-axis: numeric time scale using epoch-ms timestamps.
                 We use type="number" with scale="time" instead of a
@@ -402,16 +409,16 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
               domain={["dataMin", "dataMax"]}
               ticks={axisTicks}
               tickFormatter={formatTick}
-              tick={{ fontSize: 12 }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 12, fill: "#7C8DA1" }}
+              stroke="#7C8DA1"
             />
 
             {/* Y-axis: prices in euros. Auto domain lets Recharts pick
                 sensible min/max from the data. */}
             <YAxis
               tickFormatter={formatPrice}
-              tick={{ fontSize: 12 }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 12, fill: "#7C8DA1" }}
+              stroke="#7C8DA1"
               domain={["auto", "auto"]}
               width={60}
             />
@@ -432,8 +439,8 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
             <Line
               type="stepAfter"
               dataKey="price"
-              stroke="#0A6FB0"
-              strokeWidth={2}
+              stroke="#0BA4B4"
+              strokeWidth={2.5}
               connectNulls={false}
               isAnimationActive={false}
               activeDot={false}
@@ -497,7 +504,7 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
                       cx={cx}
                       cy={cy}
                       r={isActive ? 7 : 5}
-                      fill="#0A6FB0"
+                      fill="#0BA4B4"
                       stroke="none"
                       pointerEvents="none"
                       style={noSelect}
@@ -520,24 +527,26 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
           const formattedDate = tooltipDateFormatter.format(d);
 
           return (
+            /* Tooltip as a miniature navy price plate, echoing the page's
+               main price treatment: white price on ink, muted meta lines. */
             <div
-              className="absolute pointer-events-none bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-2 text-sm z-10"
+              className="absolute pointer-events-none bg-ink rounded-md shadow-lg px-3 py-2 text-sm z-10"
               style={{
                 left: activeDotPos.cx,
                 top: activeDotPos.cy - 10,
                 transform: "translate(-50%, -100%)",
               }}
             >
-              <p className="font-medium text-gray-900">{formattedDate}</p>
+              <p className="text-xs text-ink-soft whitespace-nowrap">{formattedDate}</p>
               {point.price != null ? (
                 <>
-                  <p className="text-price font-semibold">
+                  <p className="price-figure font-bold text-white">
                     €{point.price.toFixed(2)}
                   </p>
-                  <p className="text-gray-500">{point.store}</p>
+                  <p className="text-xs text-ink-soft">{point.store}</p>
                 </>
               ) : (
-                <p className="text-red-600">{labels.unavailable}</p>
+                <p className="text-red-300">{labels.unavailable}</p>
               )}
             </div>
           );
@@ -547,7 +556,7 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
       {/* Sparse-data caption: shown when the chart is a single dot or a
           flat line, indicating that history collection has just started. */}
       {isSparse && (
-        <p className="text-sm text-gray-400 mt-2">{labels.collectingHistory}</p>
+        <p className="text-sm text-faint mt-2">{labels.collectingHistory}</p>
       )}
     </div>
   );

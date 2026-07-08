@@ -33,19 +33,29 @@ export default async function UnsubscribePage({ params, searchParams }: PageProp
 
   if (!token) {
     return (
-      <div className="max-w-md mx-auto mt-16 text-center">
-        <h1 className="text-xl font-bold mb-4">{t("unsubscribeTitle")}</h1>
-        <p className="text-gray-600">{t("invalidToken")}</p>
+      <div className="max-w-md mx-auto my-16 px-4">
+        {/* Centered sheet matching the site's 404/error page style. */}
+        <div className="text-center bg-surface border border-line rounded-lg p-8 shadow-sm">
+          <h1 className="text-xl font-extrabold tracking-tight text-ink font-heading mb-3">
+            {t("unsubscribeTitle")}
+          </h1>
+          <p className="text-mute">{t("invalidToken")}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto mt-16 text-center">
-      <h1 className="text-xl font-bold mb-4">{t("unsubscribeTitle")}</h1>
-      <p className="text-gray-600 mb-6">{t("unsubscribeDescription")}</p>
-      {/* Client component handles the POST and shows result inline */}
-      <UnsubscribeButton token={token} />
+    <div className="max-w-md mx-auto my-16 px-4">
+      {/* Centered sheet matching the site's 404/error page style. */}
+      <div className="text-center bg-surface border border-line rounded-lg p-8 shadow-sm">
+        <h1 className="text-xl font-extrabold tracking-tight text-ink font-heading mb-3">
+          {t("unsubscribeTitle")}
+        </h1>
+        <p className="text-mute mb-6">{t("unsubscribeDescription")}</p>
+        {/* Client component handles the POST and shows result inline */}
+        <UnsubscribeButton token={token} />
+      </div>
     </div>
   );
 }

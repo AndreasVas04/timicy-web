@@ -195,15 +195,16 @@ export default async function ProductPage({ params }: PageProps) {
   // cheaper than all available offers.
   const bestOffer = offers.find((o) => o.available && o.current_price != null);
 
-  // Highest AVAILABLE price — used for the "up to €X cheaper" savings note.
-  // Only meaningful when 2+ stores have the item available at different prices.
+  // Price range across AVAILABLE offers — shown as a quiet factual note
+  // below the price plate. Only meaningful when 2+ stores have a price
+  // and the spread is non-zero (min != max).
   const availablePrices = offers
     .filter((o) => o.available && o.current_price != null)
     .map((o) => Number(o.current_price));
-  const maxAvailable = availablePrices.length >= 2 ? Math.max(...availablePrices) : null;
-  const savings =
-    bestOffer && maxAvailable != null && maxAvailable > Number(bestOffer.current_price)
-      ? maxAvailable - Number(bestOffer.current_price)
+  const priceRange =
+    availablePrices.length >= 2 &&
+    Math.min(...availablePrices) !== Math.max(...availablePrices)
+      ? { min: Math.min(...availablePrices), max: Math.max(...availablePrices) }
       : null;
 
   // Fallback when EVERY store is out of stock: show the last known (cheapest)
@@ -247,76 +248,91 @@ export default async function ProductPage({ params }: PageProps) {
       )}
 
       {/* Product header */}
-      <div className="flex flex-col sm:flex-row gap-6 mb-8">
-        {/* Product image with fallback */}
-        {/* Product image — `relative` enables next/image `fill` mode;
-            `unoptimized` in next.config.ts avoids Vercel proxy costs. */}
-        <div className="relative w-full sm:w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 mb-10">
+        {/* Product image on a white sheet with a hairline border.
+            `relative` enables next/image `fill` mode; `unoptimized` in
+            next.config.ts avoids Vercel proxy costs. */}
+        <div className="relative w-full sm:w-72 h-64 sm:h-72 bg-surface border border-line rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
           {product.image_url ? (
             <Image
               src={product.image_url}
               alt={decodeEntities(product.canonical_title)}
               fill
-              sizes="(max-width: 640px) 100vw, 256px"
-              className="object-contain p-2"
+              sizes="(max-width: 640px) 100vw, 288px"
+              className="object-contain p-4"
             />
           ) : (
-            <span className="text-gray-400 text-sm">{t("noImage")}</span>
+            <span className="text-faint text-sm">{t("noImage")}</span>
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 min-w-0">
           {product.brand && (
-            <span className="text-xs uppercase tracking-wide text-gray-500">{product.brand}</span>
+            <span className="text-xs uppercase tracking-[0.08em] text-faint">{product.brand}</span>
           )}
-          <h1 className="text-2xl sm:text-3xl font-bold text-ink">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
             {decodeEntities(product.canonical_title)}
           </h1>
-          {humanCategory && <p className="text-sm text-gray-500">{humanCategory}</p>}
+          {humanCategory && <p className="text-sm text-mute">{humanCategory}</p>}
 
-          {/* Price hero: the page's focal point. Best available price large and
-              emerald; store attribution + optional savings note underneath. */}
+          {/* Price plate: the page's focal point and the brand's signature
+              element. The best available price sits on a deep navy plate
+              with the graph-paper grid, set very large in white; store
+              attribution and the quiet factual price-range line sit
+              underneath in the same muted ink-soft tone, so the big
+              price stays the plate's only loud element. */}
           {bestOffer ? (
-            <div className="mt-3">
-              <p className="text-sm text-gray-500">{t("bestPrice")}</p>
-              <p className="text-3xl sm:text-4xl font-bold text-price tabular-nums">
+            <div className="mt-4 max-w-md rounded-lg bg-ink-deep grid-paper px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                {t("bestPrice")}
+              </p>
+              <p className="price-figure mt-1 text-4xl sm:text-5xl font-extrabold text-white">
                 €{Number(bestOffer.current_price).toFixed(2)}
               </p>
-              <p className="text-sm text-gray-600 mt-1">{t("atStore", { store: bestOffer.store })}</p>
-              {savings != null && savings >= 1 && (
-                <p className="text-sm font-medium mt-1 text-save-dark">
-                  {t("saveVsMax", { amount: savings.toFixed(0) })}
+              <p className="text-sm text-ink-soft mt-2">{t("atStore", { store: bestOffer.store })}</p>
+              {/* Price range: same treatment as the store line, tabular
+                  figures, shown only for a real spread (2+ priced stores,
+                  min != max). */}
+              {priceRange && (
+                <p className="text-sm text-ink-soft tabular-nums mt-1">
+                  {t("priceRange", {
+                    min: `€${priceRange.min.toFixed(2)}`,
+                    max: `€${priceRange.max.toFixed(2)}`,
+                  })}
                 </p>
               )}
             </div>
           ) : lastKnownOffer ? (
-            <div className="mt-3">
-              {/* All stores out of stock — honest muted state, no green promise. */}
-              <p className="text-sm font-medium text-gray-600">{t("allUnavailable")}</p>
-              <p className="text-sm text-gray-500 mt-1">
+            <div className="mt-4 max-w-md rounded-lg border border-line bg-surface px-5 py-4">
+              {/* All stores out of stock — honest muted state, no navy plate promise. */}
+              <p className="text-sm font-medium text-mute">{t("allUnavailable")}</p>
+              <p className="text-sm text-mute mt-1">
                 {t("lastKnownPrice")}:{" "}
-                <span className="font-semibold tabular-nums">€{Number(lastKnownOffer.current_price).toFixed(2)}</span>
+                <span className="price-figure font-bold text-ink">€{Number(lastKnownOffer.current_price).toFixed(2)}</span>
               </p>
             </div>
           ) : null}
 
           {/* Freshness badge — small trust signal. */}
           {freshnessDate && (
-            <p className="text-xs text-gray-400 mt-2">{t("pricesUpdated", { date: freshnessDate })}</p>
+            <p className="text-xs text-faint mt-3">{t("pricesUpdated", { date: freshnessDate })}</p>
           )}
         </div>
       </div>
 
-      {/* Offers section */}
+      {/* Offers section: the comparison ledger. One white sheet, one row
+          per store, hairline rules between rows. The cheapest available
+          offer carries a teal left rail and tint; every other row keeps a
+          transparent rail so columns stay aligned. */}
       <section>
-        <h2 className="text-lg font-semibold mb-4">
+        <h2 className="text-base sm:text-lg font-bold tracking-tight mb-3">
           {offers.length > 0
             ? t("pricesFromStores", { count: offers.length })
             : t("noOffers")}
         </h2>
 
         {offers.length > 0 && (
-          <ul className="divide-y divide-line border border-line rounded-lg bg-surface">
+          <ul className="divide-y divide-line border border-line rounded-lg bg-surface overflow-hidden">
             {offers.map((offer, idx) => {
               // Check if this is the best (cheapest available) offer.
               const isBest =
@@ -329,27 +345,37 @@ export default async function ProductPage({ params }: PageProps) {
               return (
                 <li
                   key={`${offer.store}-${offer.product_url}-${idx}`}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 ${
-                    isBest ? "bg-price/5" : ""
+                  className={`flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3.5 border-l-[3px] ${
+                    isBest
+                      ? "border-l-brand bg-brand-tint/60"
+                      : "border-l-transparent"
                   }`}
                 >
-                  <div className="flex flex-col gap-1">
-                    {/* Store name. The cheapest available offer is indicated by the row tint
-                        and the hero price above — no extra badge needed (keep it simple). */}
-                    <span className="font-medium text-ink">{offer.store}</span>
-                    {offer.current_price != null ? (
-                      <span className={`text-lg font-semibold tabular-nums ${offer.available ? "text-ink" : "text-gray-400"}`}>
-                        €{Number(offer.current_price).toFixed(2)}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
+                  {/* Store + availability. The cheapest available offer is
+                      indicated by the teal rail and the price plate above,
+                      no extra badge needed (keep it simple). */}
+                  <div className="flex flex-col gap-0.5 min-w-0 sm:flex-1">
+                    <span className="font-semibold text-ink">{offer.store}</span>
                     {!offer.available ? (
                       <span className="text-sm text-red-600">{t("outOfStock")}</span>
                     ) : (
-                      <span className="text-sm text-price">{t("available")}</span>
+                      <span className="text-sm text-stock">{t("available")}</span>
                     )}
                   </div>
+
+                  {/* Price column: right-aligned on desktop so amounts line
+                      up down the ledger; large heading-face tabular figures. */}
+                  {offer.current_price != null ? (
+                    <span
+                      className={`price-figure text-xl sm:text-2xl font-extrabold sm:text-right ${
+                        offer.available ? "text-ink" : "text-faint"
+                      }`}
+                    >
+                      €{Number(offer.current_price).toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-faint sm:text-right">—</span>
+                  )}
 
                   {/* CTA: solid navy for purchasable offers; quiet bordered variant for
                       out-of-stock so the page never "sells" an unavailable item. */}
@@ -357,10 +383,10 @@ export default async function ProductPage({ params }: PageProps) {
                     href={offer.product_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                    className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap sm:ml-6 ${
                       offer.available
-                        ? "bg-ink text-white hover:bg-ink/90"
-                        : "border border-line text-gray-600 hover:border-brand hover:text-brand"
+                        ? "bg-ink text-white hover:bg-ink-deep"
+                        : "border border-line text-mute hover:border-brand hover:text-brand"
                     }`}
                   >
                     {t("goToStore")}
@@ -375,11 +401,13 @@ export default async function ProductPage({ params }: PageProps) {
       {/* Price history chart section — shows the cheapest available price
           over time as a step-line chart.  Empty state is handled inline
           with a muted message when no history data exists yet. */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">{t("priceHistory")}</h2>
+      <section className="mt-10">
+        <h2 className="text-base sm:text-lg font-bold tracking-tight mb-3">{t("priceHistory")}</h2>
 
         {pricePoints.length === 0 ? (
-          <p className="text-sm text-gray-400">{t("noPriceHistory")}</p>
+          <p className="rounded-lg border border-dashed border-line px-4 py-8 text-center text-sm text-mute">
+            {t("noPriceHistory")}
+          </p>
         ) : (
           <PriceHistoryChart
             points={pricePoints}

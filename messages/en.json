@@ -12,13 +12,24 @@
   },
   "home": {
     "title": "Find the best price in Cyprus",
-    "tagline": "Compare prices on electronics and appliances from Cypriot stores."
+    "tagline": "TimiCY compares prices from iStorm, Kotsovolos, Stephanis, Electroline, Public and Bionic every night. Free and neutral.",
+    "heroTitle": "Same product. Six stores. One best price.",
+    "heroSubline": "TimiCY compares prices from iStorm, Kotsovolos, Stephanis, Electroline, Public and Bionic every night. Free and neutral.",
+    "trustStores": "<hl>6</hl> stores",
+    "trustCategories": "<hl>21</hl> categories",
+    "trustUpdated": "Updated <hl>nightly</hl>",
+    "categoriesTitle": "Categories",
+    "step1Title": "Find the product",
+    "step1Text": "Search or pick a category.",
+    "step2Title": "Compare prices",
+    "step2Text": "See which store has it cheaper.",
+    "step3Title": "Buy from the store",
+    "step3Text": "We send you straight there."
   },
   "footer": {
     "about": "How it works",
     "terms": "Terms of Use",
     "privacy": "Privacy Policy",
-    "contact": "Contact",
     "copyright": "\u00a9 2026 TimiCY."
   },
   "category": {
@@ -34,7 +45,6 @@
     "pageOf": "Page {current} of {total}",
     "metaTitle": "{category} — Compare Prices in Cyprus | TimiCY",
     "metaDescription": "Compare {category} prices from electronics stores in Cyprus. Check availability, price history and find the cheapest deal on TimiCY.",
-    "browseCategories": "Categories",
     "unavailable": "Out of stock",
     "noImage": "No image",
     "paginationLabel": "Pagination"
@@ -51,7 +61,7 @@
     "allUnavailable": "Currently unavailable at all stores",
     "lastKnownPrice": "Last known price",
     "atStore": "at {store}",
-    "saveVsMax": "up to €{amount} cheaper than the most expensive store",
+    "priceRange": "Price range: {min} – {max}",
     "noOffers": "No offers available for this product",
     "metaTitle": "{title} — Price in Cyprus | TimiCY",
     "metaDescriptionWithPrice": "{title} from {price} in {count, plural, one {# store} other {# stores}} in Cyprus. Compare prices and see price history on TimiCY.",

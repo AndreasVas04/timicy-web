@@ -91,13 +91,13 @@ export default async function AboutPage({ params }: PageProps) {
           The about page has no "last updated" line. */}
       <LegalPageHeader title={content.title} />
 
-      {/* Body card: white surface matching the site's card style. */}
-      <div className="bg-surface border border-line rounded-xl p-6 sm:p-10">
+      {/* Body card: white surface matching the site's sheet style. */}
+      <div className="bg-surface border border-line rounded-lg p-6 sm:p-10">
         {/* Intro paragraphs with relaxed leading. */}
         {content.intro.map((para, idx) => (
           <p
             key={idx}
-            className={`text-gray-600 leading-relaxed ${idx > 0 ? "mt-3" : ""}`}
+            className={`text-mute leading-relaxed ${idx > 0 ? "mt-3" : ""}`}
           >
             {para}
           </p>
@@ -109,7 +109,7 @@ export default async function AboutPage({ params }: PageProps) {
           {content.stores.map((store) => (
             <span
               key={store}
-              className="flex items-center justify-center px-3 py-3 bg-surface border border-line rounded-lg text-sm font-medium text-ink text-center hover:border-brand transition-colors"
+              className="flex items-center justify-center px-3 py-3 bg-surface border border-line rounded-md text-sm font-medium text-ink text-center hover:border-brand transition-colors"
             >
               {store}
             </span>
@@ -117,17 +117,20 @@ export default async function AboutPage({ params }: PageProps) {
         </div>
 
         {/* Feature blocks: responsive card grid (1 col mobile, 3 cols
-            desktop). items-stretch + h-full ensure equal-height cards. */}
+            desktop). items-stretch + h-full ensure equal-height cards.
+            Each block carries the short teal accent bar used by the
+            legal-page sections, keeping the family resemblance. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 items-stretch">
           {content.blocks.map((block, idx) => (
             <div
               key={idx}
-              className="border border-line rounded-lg p-4 h-full"
+              className="border border-line rounded-md p-4 h-full"
             >
-              <h2 className="text-base font-semibold text-ink font-heading mb-2">
+              <div className="w-8 h-0.5 bg-brand mb-3" />
+              <h2 className="text-base font-bold tracking-tight text-ink font-heading mb-2">
                 {block.heading}
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-mute leading-relaxed">
                 {block.body}
               </p>
             </div>
@@ -135,7 +138,7 @@ export default async function AboutPage({ params }: PageProps) {
         </div>
 
         {/* Outro paragraph with contact email link. */}
-        <p className="text-gray-600 leading-relaxed mt-8">
+        <p className="text-mute leading-relaxed mt-8">
           {/* Split the outro around the email address so it can be rendered
               as a clickable mailto link. If the email is not in the string,
               render the paragraph as-is. */}

@@ -32,11 +32,11 @@ export function LegalPageHeader({
 }) {
   return (
     <header className="mb-8">
-      <h1 className="text-3xl sm:text-4xl font-bold text-ink font-heading">
+      <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-ink font-heading">
         {title}
       </h1>
       {lastUpdated && (
-        <p className="mt-2 text-sm text-gray-400">{lastUpdated}</p>
+        <p className="mt-2 text-sm text-faint">{lastUpdated}</p>
       )}
       {/* Subtle horizontal rule with breathing room above and below. */}
       <hr className="mt-6 border-line" />
@@ -64,7 +64,7 @@ export default function LegalPageShell({
       {/* Body card: white surface with a subtle border, comfortable padding.
           Sections are separated by border-line dividers (divide-y) with
           generous vertical padding per section. */}
-      <div className="bg-surface border border-line rounded-xl p-6 sm:p-10">
+      <div className="bg-surface border border-line rounded-lg p-6 sm:p-10">
         <div className="divide-y divide-line">
           {content.sections.map((section, idx) => (
             <section
@@ -75,7 +75,7 @@ export default function LegalPageShell({
               <div className="w-12 h-0.5 bg-brand mb-4" />
 
               {/* Section heading with clear step-down from the h1. */}
-              <h2 className="text-xl sm:text-2xl font-semibold text-ink font-heading mb-3">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink font-heading mb-3">
                 {section.heading}
               </h2>
 
@@ -84,7 +84,7 @@ export default function LegalPageShell({
               {section.paragraphs.map((para, pIdx) => (
                 <p
                   key={pIdx}
-                  className="text-gray-600 leading-relaxed mt-2"
+                  className="text-mute leading-relaxed mt-2"
                 >
                   {renderParagraphWithLinks(para)}
                 </p>

@@ -27,10 +27,10 @@ export default function RootNotFound() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#F7F8FA" /* --color-page */,
+          backgroundColor: "#EDF1F5" /* --color-page */,
           fontFamily:
             "ui-sans-serif, system-ui, -apple-system, sans-serif",
-          color: "#374151",
+          color: "#51637A" /* --color-mute */,
         }}
       >
         <div
@@ -39,18 +39,21 @@ export default function RootNotFound() {
             width: "100%",
             textAlign: "center",
             backgroundColor: "#FFFFFF" /* --color-surface */,
-            border: "1px solid #E4E7EB" /* --color-line */,
-            borderRadius: "0.75rem",
+            border: "1px solid #DDE4EB" /* --color-line */,
+            borderRadius: "0.5rem",
             padding: "2rem",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          {/* Large 404 indicator. */}
+          {/* Large 404 indicator: oversized figures in a faint ink wash,
+              matching the locale-level 404 page treatment. */}
           <p
             style={{
-              fontSize: "3.75rem",
-              fontWeight: 700,
-              color: "#E4E7EB",
+              fontSize: "4.5rem",
+              fontWeight: 800,
+              fontVariantNumeric: "tabular-nums",
+              letterSpacing: "-0.02em",
+              color: "rgba(10, 37, 64, 0.1)" /* --color-ink at 10% */,
               marginBottom: "1rem",
               lineHeight: 1,
             }}
@@ -62,7 +65,8 @@ export default function RootNotFound() {
           <h1
             style={{
               fontSize: "1.5rem",
-              fontWeight: 700,
+              fontWeight: 800,
+              letterSpacing: "-0.025em",
               color: "#0A2540" /* --color-ink */,
               marginBottom: "0.75rem",
             }}
@@ -71,7 +75,7 @@ export default function RootNotFound() {
           </h1>
 
           {/* Greek body text. */}
-          <p style={{ color: "#6B7280", marginBottom: "1.5rem" }}>
+          <p style={{ color: "#51637A" /* --color-mute */, marginBottom: "1.5rem" }}>
             Η σελίδα που ψάχνεις δεν υπάρχει ή έχει μετακινηθεί.
           </p>
 
@@ -81,11 +85,11 @@ export default function RootNotFound() {
             style={{
               display: "inline-block",
               padding: "0.625rem 1.5rem",
-              backgroundColor: "#0BA4B4" /* --color-brand */,
+              backgroundColor: "#0A2540" /* --color-ink (navy primary button) */,
               color: "#FFFFFF",
               fontSize: "0.875rem",
               fontWeight: 500,
-              borderRadius: "0.5rem",
+              borderRadius: "0.375rem",
               textDecoration: "none",
             }}
           >

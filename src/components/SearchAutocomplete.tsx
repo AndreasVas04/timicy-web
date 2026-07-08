@@ -206,7 +206,7 @@ export function SearchAutocomplete({
           input itself, independent of the dropdown that follows below. */}
       <div className="relative">
         {/* Leading magnifier icon (decorative). */}
-        <span className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400`} aria-hidden="true">
+        <span className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint`} aria-hidden="true">
           <svg className={compact ? "h-4 w-4" : "h-5 w-5"} xmlns="http://www.w3.org/2000/svg"
                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
@@ -232,8 +232,10 @@ export function SearchAutocomplete({
             highlightIndex >= 0 ? `${optionIdPrefix}-${highlightIndex}` : undefined
           }
           aria-autocomplete="list"
-          className={`w-full rounded-lg border border-line
-                     focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand
+          /* Filled field: page-gray at rest so it reads as a slot in the
+             white header, lifting to white with a teal ring on focus. */
+          className={`w-full rounded-md border border-line bg-page text-ink placeholder:text-faint
+                     transition-colors focus:border-brand focus:bg-surface focus:outline-none focus:ring-1 focus:ring-brand
                      ${compact ? "pl-9 pr-9 py-1.5 text-sm" : "pl-11 pr-11 py-3 text-base"}`}
         />
 
@@ -253,11 +255,11 @@ export function SearchAutocomplete({
         <ul
           id={listboxId}
           role="listbox"
-          className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-gray-200
-                     bg-white shadow-lg"
+          className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-md border border-line
+                     bg-surface shadow-lg"
         >
           {results.length === 0 && !loading ? (
-            <li className="px-4 py-3 text-sm text-gray-500">
+            <li className="px-4 py-3 text-sm text-mute">
               {t("noResults")}
             </li>
           ) : (
@@ -274,17 +276,17 @@ export function SearchAutocomplete({
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${
                     index === highlightIndex
-                      ? "bg-brand/10"
+                      ? "bg-brand-tint"
                       : "hover:bg-page"
                   }`}
                 >
                   {/* Product image with fallback for null image_url */}
-                  <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-gray-100">
+                  <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-sm border border-line bg-surface">
                     {/* Thumbnail — fixed 40×40, no `fill` needed. */}
                     {result.image_url ? (
                       <Image src={result.image_url} alt="" width={40} height={40} className="h-full w-full object-contain" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-gray-300">
+                      <div className="flex h-full w-full items-center justify-center text-faint">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-5 w-5"
@@ -305,14 +307,15 @@ export function SearchAutocomplete({
 
                   {/* Product info */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-900">
+                    <p className="truncate text-sm font-medium text-ink">
                       {result.canonical_title}
                     </p>
-                    <p className="text-xs text-gray-500">{result.brand}</p>
+                    <p className="text-xs text-mute">{result.brand}</p>
                   </div>
 
-                  {/* Price */}
-                  <span className="flex-shrink-0 text-sm font-semibold text-green-700">
+                  {/* Price — ink, heading face, tabular: the same price
+                      voice used everywhere else on the site. */}
+                  <span className="price-figure flex-shrink-0 text-sm font-bold text-ink">
                     {t("fromPrice", {
                       price: `€${Number(result.min_price).toFixed(2)}`,
                     })}

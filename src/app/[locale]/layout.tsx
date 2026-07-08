@@ -84,12 +84,20 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className={`${inter.variable} ${manrope.variable}`}>
-      <body className="min-h-screen flex flex-col bg-page text-gray-900">
+      {/* Default text color is the brand navy: body copy shares the same
+          ink as headings and prices, with mute/faint tokens for hierarchy. */}
+      <body className="min-h-screen flex flex-col bg-page text-ink">
         <NextIntlClientProvider messages={messages}>
-          {/* Site header — relative positioning so the mobile search panel
-              can be absolutely positioned below the header bar. */}
-          <header className="relative bg-surface border-b border-line">
-            <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
+          {/* Site header — sticky so search and navigation stay reachable
+              while scrolling. `sticky` is a positioned box, so the mobile
+              search panel can still be absolutely positioned below the
+              header bar (previously done via `relative`); z-40 keeps the
+              bar above page content (the hero band, product images).
+              The 3px teal strip along the very top edge is the brand's
+              "index line": a small constant marker on every page. */}
+          <header className="sticky top-0 z-40 bg-surface border-b border-line">
+            <div aria-hidden="true" className="h-[3px] bg-brand" />
+            <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-3.5">
               {/* Logo links to the homepage. The source image is a
                   471×120 truecolor+alpha PNG — exactly 3× the displayed
                   157×40 size (same ≈ 3.94 aspect ratio) — so the logo
@@ -122,7 +130,7 @@ export default async function LocaleLayout({
           </header>
 
           {/* Main content area */}
-          <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-8">
+          <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-8">
             {children}
           </main>
 
@@ -137,39 +145,55 @@ export default async function LocaleLayout({
 /**
  * Footer component — server-rendered, uses translations.
  *
- * Two-row layout:
- * Row 1: navigation links (about, terms, privacy, contact) separated by
- *   middle-dot characters. Internal links use the locale-aware Link
- *   component; the contact link is a plain mailto anchor.
- * Row 2: copyright line with the year and site tagline.
+ * The closing "ledger band": deep navy with the faint graph-paper grid
+ * shared by the hero and the price plate, so the page opens and closes
+ * on the same identity surface. Content is unchanged:
+ * Row 0: a small decorative step-line (the price-drop motif).
+ * Row 1: navigation links (about, terms, privacy) separated by
+ *   middle-dot characters, muted ink-soft brightening to white on hover.
+ * Row 2: copyright line in the same muted tone.
  */
 async function Footer() {
   const t = await getTranslations("footer");
   return (
-    <footer className="border-t border-line py-6 text-center text-sm text-gray-500">
+    <footer className="bg-ink-deep grid-paper py-12 text-center text-sm text-ink-soft">
+      {/* Decorative step-line motif: price holds, drops, settles on a
+          teal dot. Purely ornamental, mirrors the homepage hero. */}
+      <svg
+        aria-hidden="true"
+        className="mx-auto mb-6 text-brand"
+        width="120"
+        height="28"
+        viewBox="0 0 120 28"
+        fill="none"
+      >
+        <path
+          d="M2 6 H40 V14 H76 V22 H110"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.9"
+        />
+        <circle cx="110" cy="22" r="3.5" fill="currentColor" />
+      </svg>
+
       {/* Row 1: navigation links separated by middle-dot. */}
-      <nav className="flex items-center justify-center gap-2 flex-wrap">
-        <Link href="/about" className="hover:text-brand transition-colors">
+      <nav className="mx-auto max-w-6xl px-4 flex items-center justify-center gap-2 flex-wrap">
+        <Link href="/about" className="hover:text-white transition-colors">
           {t("about")}
         </Link>
         <span aria-hidden="true">&middot;</span>
-        <Link href="/terms" className="hover:text-brand transition-colors">
+        <Link href="/terms" className="hover:text-white transition-colors">
           {t("terms")}
         </Link>
         <span aria-hidden="true">&middot;</span>
-        <Link href="/privacy" className="hover:text-brand transition-colors">
+        <Link href="/privacy" className="hover:text-white transition-colors">
           {t("privacy")}
         </Link>
-        <span aria-hidden="true">&middot;</span>
-        <a
-          href="mailto:contact@timicy.com"
-          className="hover:text-brand transition-colors"
-        >
-          {t("contact")}
-        </a>
       </nav>
-      {/* Row 2: copyright and tagline. */}
-      <p className="mt-2">{t("copyright")}</p>
+      {/* Row 2: copyright line. */}
+      <p className="mt-4 text-ink-soft/80">{t("copyright")}</p>
     </footer>
   );
 }

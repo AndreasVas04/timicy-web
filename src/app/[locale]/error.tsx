@@ -44,20 +44,20 @@ export default function ErrorPage({
 
   return (
     <div className="flex flex-1 items-center justify-center py-24 px-4">
-      {/* Centered card matching the site's 404 page style. */}
-      <div className="max-w-md w-full text-center bg-surface border border-line rounded-xl p-8 shadow-sm">
-        {/* Muted exclamation indicator. */}
-        <p className="text-6xl mb-4 select-none" aria-hidden="true">!</p>
+      {/* Centered sheet matching the site's 404 page style. */}
+      <div className="max-w-md w-full text-center bg-surface border border-line rounded-lg p-8 shadow-sm">
+        {/* Muted exclamation indicator in the faint ink wash. */}
+        <p className="text-7xl font-extrabold font-heading text-ink/10 mb-4 select-none" aria-hidden="true">!</p>
 
         {/* Error heading — ink color, heading font. */}
-        <h1 className="text-2xl font-bold text-ink font-heading mb-3">
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink font-heading mb-3">
           {copy.title}
         </h1>
 
         {/* Retry button — calls Next.js reset() to re-render the segment. */}
         <button
           onClick={reset}
-          className="inline-block px-6 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand-hover transition-colors"
+          className="inline-block px-6 py-2.5 bg-ink text-white text-sm font-medium rounded-md hover:bg-ink-deep transition-colors"
         >
           {copy.retry}
         </button>

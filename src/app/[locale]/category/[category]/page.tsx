@@ -10,7 +10,7 @@ import {
   CATEGORY_SLUGS,
   type CategorySlug,
 } from "@/lib/categories";
-import Image from "next/image";
+import { ProductCard } from "@/components/ProductCard";
 import { buildProductSlug } from "@/lib/slug";
 import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
@@ -201,182 +201,140 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
   return (
     <div>
-      {/* Category heading */}
-      <h1 className="text-2xl font-bold sm:text-3xl mb-6">{label}</h1>
+      {/* Page header row: heading left, sort control right (wraps on
+          small screens). The heading uses the identity voice: heading
+          face, extrabold, tight tracking. */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{label}</h1>
 
-      {/* Sort controls — plain links, no client JS required */}
-      <nav aria-label={t("sortLabel")} className="flex flex-wrap gap-2 mb-6">
-        <span className="text-sm text-gray-500 self-center mr-1">
-          {t("sortLabel")}:
-        </span>
-        {sortOptions.map((opt) => (
-          <Link
-            key={opt.key}
-            href={buildUrl(opt.key, 1)}
-            className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-              // Active sort pill uses the ink/brand palette instead of leftover blue.
-              sort === opt.key
-                ? "bg-ink text-white border-ink"
-                : "bg-surface text-gray-700 border-line hover:border-brand hover:text-brand"
-            }`}
-          >
-            {opt.label}
-          </Link>
-        ))}
-      </nav>
+        {/* Sort controls — plain links, no client JS required. Rendered
+            as a single segmented control (one bordered box, hairline
+            dividers) instead of floating pills: a data-tool affordance. */}
+        <nav aria-label={t("sortLabel")} className="flex items-center gap-3">
+          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-faint">
+            {t("sortLabel")}
+          </span>
+          <div className="inline-flex divide-x divide-line overflow-hidden rounded-md border border-line bg-surface">
+            {sortOptions.map((opt) => (
+              <Link
+                key={opt.key}
+                href={buildUrl(opt.key, 1)}
+                className={`px-3 py-1.5 text-sm transition-colors ${
+                  sort === opt.key
+                    ? "bg-ink font-medium text-white"
+                    : "text-mute hover:bg-page hover:text-ink"
+                }`}
+              >
+                {opt.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      </div>
 
-      {/* Empty state */}
+      {/* Empty state: quiet message on a dashed sheet. */}
       {products.length === 0 && (
-        <p className="text-gray-500 py-12 text-center">{t("empty")}</p>
+        <p className="rounded-lg border border-dashed border-line py-16 text-center text-mute">
+          {t("empty")}
+        </p>
       )}
 
-      {/* Product grid */}
+      {/* Product grid — shared ProductCard, ledger layout (see component). */}
       {products.length > 0 && (
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-          {products.map((product) => (
-            <li key={product.id}>
-              <Link
-                href={`/product/${buildProductSlug(product.id, product.canonical_title)}`}
-                className="group flex flex-col h-full bg-surface border border-line rounded-xl overflow-hidden
-                           transition-all duration-200 hover:border-brand hover:shadow-md hover:-translate-y-0.5"
-              >
-                {/* Image area: soft neutral backdrop; subtle zoom on hover for tactile feedback. */}
-                <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
-                  {/* next/image with `fill` — lazy-loads by default;
-                      `unoptimized` in next.config.ts avoids Vercel proxy costs. */}
-                  {/* Product image — reduced opacity when all offers are
-                      unavailable to visually demote the card. */}
-                  {product.image_url ? (
-                    <Image
-                      src={product.image_url}
-                      alt={decodeEntities(product.canonical_title)}
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className={`object-contain transition-transform duration-200 group-hover:scale-[1.03]${
-                        product.has_available_offer === false ? " opacity-60" : ""
-                      }`}
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-xs">{t("noImage")}</span>
-                  )}
-                  {/* Savings chip — only shown when the price spread is
-                      meaningful enough to be worth highlighting AND the
-                      product has at least one available offer. Showing a
-                      savings claim on an unbuyable product is misleading.
-                      • Absolute arm (≥ €10): catches big-ticket items where
-                        5 % would be too strict (e.g. €200 → €191 = €9, skip).
-                      • Percentage arm (≥ 5 % of max AND ≥ €2): catches cheap
-                        items where €10 would never trigger (e.g. €25 → €20 = €5).
-                      A chip that says "−€0" or "−€1" undermines trust, so
-                      both arms enforce a sensible floor. */}
-                  {(() => {
-                    if (
-                      product.has_available_offer === false ||
-                      product.store_count < 2 ||
-                      product.max_price == null ||
-                      product.min_price == null
-                    )
-                      return null;
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          {products.map((product) => {
+            const unavailable = product.has_available_offer === false;
 
-                    const savings =
-                      Number(product.max_price) - Number(product.min_price);
-                    const isMeaningful =
-                      savings >= 10 ||
-                      (savings >= 0.05 * Number(product.max_price) &&
-                        savings >= 2);
+            /* Savings chip — only shown when the price spread is
+               meaningful enough to be worth highlighting AND the
+               product has at least one available offer. Showing a
+               savings claim on an unbuyable product is misleading.
+               • Absolute arm (>= €10): catches big-ticket items where
+                 5 % would be too strict (e.g. €200 -> €191 = €9, skip).
+               • Percentage arm (>= 5 % of max AND >= €2): catches cheap
+                 items where €10 would never trigger (e.g. €25 -> €20 = €5).
+               A chip that says "−€0" or "−€1" undermines trust, so
+               both arms enforce a sensible floor. */
+            let savingsText: string | null = null;
+            if (
+              !unavailable &&
+              product.store_count >= 2 &&
+              product.max_price != null &&
+              product.min_price != null
+            ) {
+              const savings =
+                Number(product.max_price) - Number(product.min_price);
+              const isMeaningful =
+                savings >= 10 ||
+                (savings >= 0.05 * Number(product.max_price) && savings >= 2);
+              if (isMeaningful) savingsText = `−€${savings.toFixed(0)}`;
+            }
 
-                    if (!isMeaningful) return null;
-
-                    return (
-                      <span className="absolute top-2 left-2 rounded-md bg-save px-2 py-0.5 text-xs font-medium text-white">
-                        −€{savings.toFixed(0)}
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                <div className="flex flex-col gap-1 p-3 grow">
-                  {product.brand && (
-                    <span className="text-xs uppercase tracking-wide text-gray-500">{product.brand}</span>
-                  )}
-                  <span className="text-sm font-medium text-ink line-clamp-2">
-                    {decodeEntities(product.canonical_title)}
-                  </span>
-
-                  {/* Price block pushed to the card bottom so all cards align
-                      in the grid row. When the product has no available offer
-                      the price is rendered in muted gray (text-gray-400)
-                      instead of emerald (text-price), because the displayed
-                      amount is a last-known price, not a currently buyable one.
-                      An "unavailable" label is shown below the price. */}
-                  <div className="mt-auto pt-1">
-                    {product.min_price != null ? (
-                      <span
-                        className={`block text-lg font-semibold tabular-nums ${
-                          product.has_available_offer === false
-                            ? "text-gray-400"
-                            : "text-price"
-                        }`}
-                      >
-                        {t("fromPrice", { price: `€${Number(product.min_price).toFixed(2)}` })}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
-                    {product.has_available_offer === false && (
-                      <span className="text-xs text-gray-400">
-                        {t("unavailable")}
-                      </span>
-                    )}
-                    {product.has_available_offer !== false &&
-                      product.store_count > 0 && (
-                        <span className="text-xs text-gray-500">
-                          {t("inStores", { count: product.store_count })}
-                        </span>
-                      )}
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
+            return (
+              <li key={product.id}>
+                <ProductCard
+                  href={`/product/${buildProductSlug(product.id, product.canonical_title)}`}
+                  title={decodeEntities(product.canonical_title)}
+                  brand={product.brand}
+                  imageUrl={product.image_url}
+                  priceText={
+                    product.min_price != null
+                      ? t("fromPrice", {
+                          price: `€${Number(product.min_price).toFixed(2)}`,
+                        })
+                      : null
+                  }
+                  metaText={
+                    unavailable
+                      ? t("unavailable")
+                      : product.store_count > 0
+                        ? t("inStores", { count: product.store_count })
+                        : null
+                  }
+                  savingsText={savingsText}
+                  noImageText={t("noImage")}
+                  unavailable={unavailable}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
 
-      {/* Pagination controls */}
+      {/* Pagination controls — matches the segmented sort control:
+          bordered prev/next buttons flanking a tabular page indicator. */}
       {totalPages > 1 && (
         <nav
           aria-label={t("paginationLabel")}
-          className="flex items-center justify-center gap-2 py-6"
+          className="flex items-center justify-center gap-3 py-6"
         >
-          {/* Previous page — active state uses the surface/brand palette; disabled stays muted. */}
           {page > 1 ? (
             <Link
               href={buildUrl(sort, page - 1)}
-              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
+              className="rounded-md border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-ink transition-colors hover:border-brand hover:text-brand"
             >
               {t("prev")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
+            <span className="rounded-md border border-line px-3.5 py-1.5 text-sm text-faint">
               {t("prev")}
             </span>
           )}
 
           {/* Page indicator */}
-          <span className="text-sm text-gray-600 px-2">
+          <span className="px-1 text-sm tabular-nums text-mute">
             {t("pageOf", { current: page, total: totalPages })}
           </span>
 
-          {/* Next page — active state uses the surface/brand palette; disabled stays muted. */}
           {page < totalPages ? (
             <Link
               href={buildUrl(sort, page + 1)}
-              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
+              className="rounded-md border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-ink transition-colors hover:border-brand hover:text-brand"
             >
               {t("next")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
+            <span className="rounded-md border border-line px-3.5 py-1.5 text-sm text-faint">
               {t("next")}
             </span>
           )}

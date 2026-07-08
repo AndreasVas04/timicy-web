@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import Image from "next/image";
 import { Link } from "@/i18n/navigation";
+import { ProductCard } from "@/components/ProductCard";
 import { buildProductSlug } from "@/lib/slug";
 import { decodeEntities } from "@/lib/decode-entities";
 import { getSearchResults } from "@/lib/queries/search";
@@ -69,10 +69,10 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   if (q.length < 2) {
     return (
       <div>
-        <h1 className="text-2xl font-bold sm:text-3xl mb-6">
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl mb-6">
           {t("resultsTitle", { query: q || "…" })}
         </h1>
-        <p className="text-gray-500 py-12 text-center">
+        <p className="rounded-lg border border-dashed border-line py-16 text-center text-mute">
           {t("minCharsPrompt")}
         </p>
       </div>
@@ -106,106 +106,76 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   return (
     <div>
       {/* Page heading */}
-      <h1 className="text-2xl font-bold sm:text-3xl mb-2">
+      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl mb-2">
         {t("resultsTitle", { query: q })}
       </h1>
 
       {/* Result count */}
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm tabular-nums text-mute mb-6">
         {t("resultsCount", { total })}
       </p>
 
-      {/* Empty state */}
+      {/* Empty state: quiet message on a dashed sheet. */}
       {products.length === 0 && (
-        <p className="text-gray-500 py-12 text-center">
+        <p className="rounded-lg border border-dashed border-line py-16 text-center text-mute">
           {t("noResultsFull", { query: q })}
         </p>
       )}
 
-      {/* Product grid — same card markup/style as the category page */}
+      {/* Product grid — shared ProductCard, same ledger layout as the
+          category page (see ProductCard component). */}
       {products.length > 0 && (
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-          {products.map((product) => (
-            <li key={product.id}>
-              <Link
-                href={`/product/${buildProductSlug(product.id, product.canonical_title)}`}
-                className="group flex flex-col h-full bg-surface border border-line rounded-xl overflow-hidden
-                           transition-all duration-200 hover:border-brand hover:shadow-md hover:-translate-y-0.5"
-              >
-                {/* Image area: soft neutral backdrop; subtle zoom on hover for tactile feedback. */}
-                {/* next/image with `fill` — lazy-loads by default;
-                    `unoptimized` in next.config.ts avoids Vercel proxy costs. */}
-                <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
-                  {product.image_url ? (
-                    <Image
-                      src={product.image_url}
-                      alt={decodeEntities(product.canonical_title)}
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-contain transition-transform duration-200 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-xs">{t("noImage")}</span>
-                  )}
-                  {/* Savings chip — only shown when the price spread is
-                      meaningful enough to be worth highlighting.
-                      • Absolute arm (≥ €10): catches big-ticket items where
-                        5 % would be too strict (e.g. €200 → €191 = €9, skip).
-                      • Percentage arm (≥ 5 % of max AND ≥ €2): catches cheap
-                        items where €10 would never trigger (e.g. €25 → €20 = €5).
-                      A chip that says "−€0" or "−€1" undermines trust, so
-                      both arms enforce a sensible floor.
-                      (Identical logic lives in the category page — keep in sync.) */}
-                  {(() => {
-                    if (
-                      product.store_count < 2 ||
-                      product.max_price == null ||
-                      product.min_price == null
-                    )
-                      return null;
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          {products.map((product) => {
+            /* Savings chip — only shown when the price spread is
+               meaningful enough to be worth highlighting.
+               • Absolute arm (>= €10): catches big-ticket items where
+                 5 % would be too strict (e.g. €200 -> €191 = €9, skip).
+               • Percentage arm (>= 5 % of max AND >= €2): catches cheap
+                 items where €10 would never trigger (e.g. €25 -> €20 = €5).
+               A chip that says "−€0" or "−€1" undermines trust, so
+               both arms enforce a sensible floor.
+               (Identical logic lives in the category page — keep in sync.) */
+            let savingsText: string | null = null;
+            if (
+              product.store_count >= 2 &&
+              product.max_price != null &&
+              product.min_price != null
+            ) {
+              const savings =
+                Number(product.max_price) - Number(product.min_price);
+              const isMeaningful =
+                savings >= 10 ||
+                (savings >= 0.05 * Number(product.max_price) && savings >= 2);
+              if (isMeaningful) savingsText = `−€${savings.toFixed(0)}`;
+            }
 
-                    const savings =
-                      Number(product.max_price) - Number(product.min_price);
-                    const isMeaningful =
-                      savings >= 10 ||
-                      (savings >= 0.05 * Number(product.max_price) &&
-                        savings >= 2);
-
-                    if (!isMeaningful) return null;
-
-                    return (
-                      <span className="absolute top-2 left-2 rounded-md bg-save px-2 py-0.5 text-xs font-medium text-white">
-                        −€{savings.toFixed(0)}
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                <div className="flex flex-col gap-1 p-3 grow">
-                  {product.brand && (
-                    <span className="text-xs uppercase tracking-wide text-gray-500">{product.brand}</span>
-                  )}
-                  <span className="text-sm font-medium text-ink line-clamp-2">
-                    {decodeEntities(product.canonical_title)}
-                  </span>
-
-                  {/* Price block pushed to the card bottom so all cards align in the grid row. */}
-                  <div className="mt-auto pt-1">
-                    {product.min_price != null ? (
-                      <span className="block text-lg font-semibold text-price tabular-nums">
-                        {tc("fromPrice", { price: `€${Number(product.min_price).toFixed(2)}` })}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
-                    {product.store_count > 0 && (
-                      <span className="text-xs text-gray-500">{tc("inStores", { count: product.store_count })}</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
+            return (
+              <li key={product.id}>
+                <ProductCard
+                  href={`/product/${buildProductSlug(product.id, product.canonical_title)}`}
+                  title={decodeEntities(product.canonical_title)}
+                  brand={product.brand}
+                  imageUrl={product.image_url}
+                  priceText={
+                    product.min_price != null
+                      ? tc("fromPrice", {
+                          price: `€${Number(product.min_price).toFixed(2)}`,
+                        })
+                      : null
+                  }
+                  metaText={
+                    product.store_count > 0
+                      ? tc("inStores", { count: product.store_count })
+                      : null
+                  }
+                  savingsText={savingsText}
+                  noImageText={t("noImage")}
+                  unavailable={false}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -215,37 +185,35 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
       {totalPages > 1 && (
         <nav
           aria-label={t("paginationLabel")}
-          className="flex items-center justify-center gap-2 py-6"
+          className="flex items-center justify-center gap-3 py-6"
         >
-          {/* Previous page — active state uses the surface/brand palette; disabled stays muted. */}
           {page > 1 ? (
             <Link
               href={buildUrl(page - 1)}
-              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
+              className="rounded-md border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-ink transition-colors hover:border-brand hover:text-brand"
             >
               {t("prev")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
+            <span className="rounded-md border border-line px-3.5 py-1.5 text-sm text-faint">
               {t("prev")}
             </span>
           )}
 
           {/* Page indicator */}
-          <span className="text-sm text-gray-600 px-2">
+          <span className="px-1 text-sm tabular-nums text-mute">
             {t("pageOf", { current: page, total: totalPages })}
           </span>
 
-          {/* Next page — active state uses the surface/brand palette; disabled stays muted. */}
           {page < totalPages ? (
             <Link
               href={buildUrl(page + 1)}
-              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
+              className="rounded-md border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-ink transition-colors hover:border-brand hover:text-brand"
             >
               {t("next")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
+            <span className="rounded-md border border-line px-3.5 py-1.5 text-sm text-faint">
               {t("next")}
             </span>
           )}

@@ -92,21 +92,26 @@ export default function PriceAlertForm({
   // After submission, show the "check your inbox" message
   if (status === "success") {
     return (
-      <div className="border border-green-200 bg-green-50 rounded-lg p-4 mt-6">
-        <p className="text-price font-medium">{t("successMessage")}</p>
+      <div className="mt-8 rounded-lg border border-stock/30 bg-stock/5 p-4">
+        <p className="font-medium text-stock">{t("successMessage")}</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border border-line rounded-lg p-4 mt-6 bg-surface">
-      <h3 className="text-lg font-semibold mb-3">{t("formTitle")}</h3>
-      <p className="text-sm text-gray-600 mb-4">{t("formDescription")}</p>
+    /* Alert form sheet: white surface with a teal left rail, marking it
+       as the page's interactive "do something" element (teal = action). */
+    <form
+      onSubmit={handleSubmit}
+      className="mt-8 rounded-lg border border-line border-l-[3px] border-l-brand bg-surface p-4 sm:p-5"
+    >
+      <h3 className="text-base sm:text-lg font-bold tracking-tight mb-1">{t("formTitle")}</h3>
+      <p className="text-sm text-mute mb-4">{t("formDescription")}</p>
 
       <div className="flex flex-col gap-3">
         {/* Email input */}
         <div>
-          <label htmlFor="alert-email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="alert-email" className="block text-sm font-medium text-mute mb-1">
             {t("emailLabel")}
           </label>
           <input
@@ -115,7 +120,7 @@ export default function PriceAlertForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t("emailPlaceholder")}
-            className="w-full px-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+            className="w-full px-3 py-2 border border-line rounded-md text-sm text-ink placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
           {errors.email && (
             <p className="text-red-600 text-xs mt-1">{errors.email}</p>
@@ -124,11 +129,11 @@ export default function PriceAlertForm({
 
         {/* Target price input */}
         <div>
-          <label htmlFor="alert-price" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="alert-price" className="block text-sm font-medium text-mute mb-1">
             {t("priceLabel")}
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">€</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-mute text-sm">€</span>
             <input
               id="alert-price"
               type="number"
@@ -136,7 +141,7 @@ export default function PriceAlertForm({
               min="0.01"
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
-              className="w-full pl-7 pr-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+              className="w-full pl-7 pr-3 py-2 border border-line rounded-md text-sm text-ink tabular-nums focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
           {errors.price && (
@@ -167,7 +172,7 @@ export default function PriceAlertForm({
         <button
           type="submit"
           disabled={status === "submitting"}
-          className="w-full px-4 py-2 bg-ink text-white text-sm font-medium rounded-md hover:bg-ink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 bg-ink text-white text-sm font-medium rounded-md hover:bg-ink-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {status === "submitting" ? t("submitting") : t("submitButton")}
         </button>
@@ -175,7 +180,7 @@ export default function PriceAlertForm({
         {/* Privacy consent note — small muted text with a link to the
             privacy policy. Uses next-intl rich text to render the <link>
             placeholder as a locale-aware anchor. */}
-        <p className="text-xs text-gray-400 mt-2 text-center">
+        <p className="text-xs text-faint mt-2 text-center">
           {t.rich("privacyConsent", {
             link: (chunks) => (
               <Link

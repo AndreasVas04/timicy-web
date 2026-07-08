@@ -18,7 +18,12 @@ import type PriceHistoryChartType from "./PriceHistoryChart";
 const PriceHistoryChart = dynamic(() => import("./PriceHistoryChart"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[300px] rounded-lg bg-gray-50 animate-pulse" aria-hidden="true" />
+    /* Placeholder mirrors the real chart layout (segmented range control
+       plus the 300px plot sheet) so nothing shifts when the chunk lands. */
+    <div aria-hidden="true">
+      <div className="mb-4 h-9 w-64 max-w-full rounded-md bg-ink/5 animate-pulse" />
+      <div className="w-full h-[300px] rounded-lg border border-line bg-surface animate-pulse" />
+    </div>
   ),
 });
 

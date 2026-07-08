@@ -26,25 +26,25 @@ export default function NotFoundPage() {
 
   return (
     <div className="flex flex-1 items-center justify-center py-24 px-4">
-      {/* Centered card with surface background, matching the site's card style. */}
-      <div className="max-w-md w-full text-center bg-surface border border-line rounded-xl p-8 shadow-sm">
-        {/* Large 404 indicator in muted text. */}
-        <p className="text-6xl font-bold text-gray-200 mb-4 font-heading">404</p>
+      {/* Centered sheet matching the site's card style. */}
+      <div className="max-w-md w-full text-center bg-surface border border-line rounded-lg p-8 shadow-sm">
+        {/* Large 404 indicator: oversized tabular figures in a faint ink wash. */}
+        <p className="price-figure text-7xl font-extrabold text-ink/10 mb-4">404</p>
 
         {/* Localized heading in ink color with the heading font. */}
-        <h1 className="text-2xl font-bold text-ink font-heading mb-3">
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink font-heading mb-3">
           {t("title")}
         </h1>
 
         {/* Localized explanation text. */}
-        <p className="text-gray-600 mb-6">
+        <p className="text-mute mb-6">
           {t("body")}
         </p>
 
-        {/* Link back to homepage, styled as a brand-colored button. */}
+        {/* Link back to homepage, styled as the site's navy primary button. */}
         <Link
           href="/"
-          className="inline-block px-6 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand-hover transition-colors"
+          className="inline-block px-6 py-2.5 bg-ink text-white text-sm font-medium rounded-md hover:bg-ink-deep transition-colors"
         >
           {t("backHome")}
         </Link>
