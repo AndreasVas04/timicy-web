@@ -231,6 +231,10 @@ export default async function ProductPage({ params }: PageProps) {
       : product.category.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
     : null;
 
+  // Decoded canonical title — used in the offer rows to suppress the
+  // per-store title line when it matches the canonical (zero noise).
+  const decodedCanonicalTitle = decodeEntities(product.canonical_title);
+
   /* --- Render ----------------------------------------------------------- */
 
   return (
@@ -342,6 +346,13 @@ export default async function ProductPage({ params }: PageProps) {
                 offer.product_url === bestOffer.product_url &&
                 idx === offers.indexOf(bestOffer);
 
+              // Decode the store's own product title for this offer.
+              // Shown as a secondary line only when it differs from the
+              // canonical title (e.g. includes color or spec detail).
+              const decodedOfferTitle = offer.title
+                ? decodeEntities(offer.title)
+                : "";
+
               return (
                 <li
                   key={`${offer.store}-${offer.product_url}-${idx}`}
@@ -356,6 +367,15 @@ export default async function ProductPage({ params }: PageProps) {
                       no extra badge needed (keep it simple). */}
                   <div className="flex flex-col gap-0.5 min-w-0 sm:flex-1">
                     <span className="font-semibold text-ink">{offer.store}</span>
+                    {/* Per-store product title: the store's own name for
+                        this product, often including color or spec detail.
+                        Hidden when identical to the canonical title. */}
+                    {decodedOfferTitle &&
+                      decodedOfferTitle !== decodedCanonicalTitle && (
+                        <span className="text-sm text-mute truncate">
+                          {decodedOfferTitle}
+                        </span>
+                      )}
                     {!offer.available ? (
                       <span className="text-sm text-red-600">{t("outOfStock")}</span>
                     ) : (
