@@ -126,56 +126,35 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
           category page (see ProductCard component). */}
       {products.length > 0 && (
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
-          {products.map((product) => {
-            /* Savings chip — only shown when the price spread is
-               meaningful enough to be worth highlighting.
-               • Absolute arm (>= €10): catches big-ticket items where
-                 5 % would be too strict (e.g. €200 -> €191 = €9, skip).
-               • Percentage arm (>= 5 % of max AND >= €2): catches cheap
-                 items where €10 would never trigger (e.g. €25 -> €20 = €5).
-               A chip that says "−€0" or "−€1" undermines trust, so
-               both arms enforce a sensible floor.
-               (Identical logic lives in the category page — keep in sync.) */
-            let savingsText: string | null = null;
-            if (
-              product.store_count >= 2 &&
-              product.max_price != null &&
-              product.min_price != null
-            ) {
-              const savings =
-                Number(product.max_price) - Number(product.min_price);
-              const isMeaningful =
-                savings >= 10 ||
-                (savings >= 0.05 * Number(product.max_price) && savings >= 2);
-              if (isMeaningful) savingsText = `−€${savings.toFixed(0)}`;
-            }
-
-            return (
-              <li key={product.id}>
-                <ProductCard
-                  href={`/product/${buildProductSlug(product.id, product.canonical_title)}`}
-                  title={decodeEntities(product.canonical_title)}
-                  brand={product.brand}
-                  imageUrl={product.image_url}
-                  priceText={
-                    product.min_price != null
-                      ? tc("fromPrice", {
-                          price: `€${Number(product.min_price).toFixed(2)}`,
-                        })
-                      : null
-                  }
-                  metaText={
-                    product.store_count > 0
-                      ? tc("inStores", { count: product.store_count })
-                      : null
-                  }
-                  savingsText={savingsText}
-                  noImageText={t("noImage")}
-                  unavailable={false}
-                />
-              </li>
-            );
-          })}
+          {products.map((product) => (
+            // Savings chip is intentionally omitted from search results:
+            // the search RPC does not return has_available_offer, so a
+            // savings claim could appear on an unbuyable product. The chip
+            // returns to search once the search RPC exposes availability.
+            <li key={product.id}>
+              <ProductCard
+                href={`/product/${buildProductSlug(product.id, product.canonical_title)}`}
+                title={decodeEntities(product.canonical_title)}
+                brand={product.brand}
+                imageUrl={product.image_url}
+                priceText={
+                  product.min_price != null
+                    ? tc("fromPrice", {
+                        price: `€${Number(product.min_price).toFixed(2)}`,
+                      })
+                    : null
+                }
+                metaText={
+                  product.store_count > 0
+                    ? tc("inStores", { count: product.store_count })
+                    : null
+                }
+                savingsText={null}
+                noImageText={t("noImage")}
+                unavailable={false}
+              />
+            </li>
+          ))}
         </ul>
       )}
 

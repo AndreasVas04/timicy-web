@@ -16,8 +16,10 @@ import { buildProductSlug } from "@/lib/slug";
 import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
 import { parsePageParam } from "@/lib/page-param";
+import { parseFilterParams, buildCategoryUrl } from "@/lib/filter-params";
 import {
   getCategoryProducts,
+  queryCategoryProducts,
   isValidSort,
   type CategorySort,
 } from "@/lib/queries/category";
@@ -35,7 +37,14 @@ export const revalidate = 86400;
 
 type PageProps = {
   params: Promise<{ locale: string; category: string }>;
-  searchParams: Promise<{ sort?: string; page?: string }>;
+  searchParams: Promise<{
+    sort?: string;
+    page?: string;
+    brand?: string;
+    min?: string;
+    max?: string;
+    stock?: string;
+  }>;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -153,27 +162,51 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   // which page is being rendered (prevents canonical URL mismatches).
   let page = parsePageParam(search.page);
 
-  // Fetch products for this category, page, and sort order.
-  const { rows: products, total } = await getCategoryProducts({
-    category,
-    sort,
-    page,
-    pageSize: PAGE_SIZE,
-  });
+  // Parse filter parameters from the URL query string (brand, min, max,
+  // stock). Invalid values are silently dropped by the parser.
+  const filters = parseFilterParams(search);
+
+  // Fetch products for this category, page, sort order, and filters.
+  // When filters are active, go directly through the raw uncached query
+  // (filtered requests are long-tail and would not benefit from caching).
+  // The unfiltered default path uses the cached wrapper for performance.
+  const { rows: products, total } = filters.hasFilters
+    ? await queryCategoryProducts({
+        category,
+        sort,
+        page,
+        pageSize: PAGE_SIZE,
+        filters,
+      })
+    : await getCategoryProducts({
+        category,
+        sort,
+        page,
+        pageSize: PAGE_SIZE,
+      });
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // If the requested page exceeds the total, clamp to the last page and
-  // re-fetch. This handles bookmarked URLs where products have been removed.
+  // re-fetch through the same path (cached or uncached) with the same
+  // filters. This handles bookmarked URLs where products have been removed.
   // In practice this is rare, so the double-fetch cost is acceptable.
   if (page > totalPages && total > 0) {
     page = totalPages;
-    const clamped = await getCategoryProducts({
-      category,
-      sort,
-      page,
-      pageSize: PAGE_SIZE,
-    });
+    const clamped = filters.hasFilters
+      ? await queryCategoryProducts({
+          category,
+          sort,
+          page,
+          pageSize: PAGE_SIZE,
+          filters,
+        })
+      : await getCategoryProducts({
+          category,
+          sort,
+          page,
+          pageSize: PAGE_SIZE,
+        });
     // Replace products in-place for rendering below.
     products.length = 0;
     products.push(...clamped.rows);
@@ -186,17 +219,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     { key: "price_asc", label: t("sortPriceAsc") },
     { key: "price_desc", label: t("sortPriceDesc") },
   ];
-
-  /* --- Helper to build pagination/sort URLs ------------------------------ */
-
-  /** Build a category page URL preserving the given sort and page. */
-  function buildUrl(s: CategorySort, p: number): string {
-    const params = new URLSearchParams();
-    if (s !== "popular") params.set("sort", s);
-    if (p > 1) params.set("page", String(p));
-    const qs = params.toString();
-    return `/category/${category}${qs ? `?${qs}` : ""}`;
-  }
 
   /* --- Render ------------------------------------------------------------- */
 
@@ -217,7 +239,12 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           options={sortOptions.map((opt) => ({
             value: opt.key,
             label: opt.label,
-            href: buildUrl(opt.key, 1),
+            href: buildCategoryUrl({
+              category,
+              sort: opt.key,
+              page: 1,
+              filters,
+            }),
           }))}
           currentValue={sort}
         />
@@ -301,7 +328,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         >
           {page > 1 ? (
             <Link
-              href={buildUrl(sort, page - 1)}
+              href={buildCategoryUrl({ category, sort, page: page - 1, filters })}
               className="rounded-md border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-ink transition-colors hover:border-brand hover:text-brand"
             >
               {t("prev")}
@@ -319,7 +346,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
           {page < totalPages ? (
             <Link
-              href={buildUrl(sort, page + 1)}
+              href={buildCategoryUrl({ category, sort, page: page + 1, filters })}
               className="rounded-md border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-ink transition-colors hover:border-brand hover:text-brand"
             >
               {t("next")}
