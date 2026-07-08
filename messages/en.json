@@ -15,7 +15,11 @@
     "tagline": "Compare prices on electronics and appliances from Cypriot stores."
   },
   "footer": {
-    "text": "TimiCY — Electronics price comparison in Cyprus"
+    "about": "How it works",
+    "terms": "Terms of Use",
+    "privacy": "Privacy Policy",
+    "contact": "Contact",
+    "copyright": "\u00a9 2026 TimiCY."
   },
   "category": {
     "sortLabel": "Sort by",
@@ -96,6 +100,7 @@
     "unsubscribeSuccess": "You have been unsubscribed. You will no longer receive alerts for this product.",
     "invalidToken": "This link is no longer valid. It may have already been used.",
     "genericError": "Something went wrong. Please try again.",
-    "processing": "Processing…"
+    "processing": "Processing…",
+    "privacyConsent": "By subscribing you accept the <link>Privacy Policy</link>. You can unsubscribe at any time."
   }
 }

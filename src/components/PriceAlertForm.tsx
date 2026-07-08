@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 /* -------------------------------------------------------------------------- */
 /*  Props                                                                     */
@@ -170,6 +171,22 @@ export default function PriceAlertForm({
         >
           {status === "submitting" ? t("submitting") : t("submitButton")}
         </button>
+
+        {/* Privacy consent note — small muted text with a link to the
+            privacy policy. Uses next-intl rich text to render the <link>
+            placeholder as a locale-aware anchor. */}
+        <p className="text-xs text-gray-400 mt-2 text-center">
+          {t.rich("privacyConsent", {
+            link: (chunks) => (
+              <Link
+                href="/privacy"
+                className="text-brand underline-offset-2 hover:underline"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
       </div>
     </form>
   );

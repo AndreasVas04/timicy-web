@@ -136,12 +136,40 @@ export default async function LocaleLayout({
 
 /**
  * Footer component — server-rendered, uses translations.
+ *
+ * Two-row layout:
+ * Row 1: navigation links (about, terms, privacy, contact) separated by
+ *   middle-dot characters. Internal links use the locale-aware Link
+ *   component; the contact link is a plain mailto anchor.
+ * Row 2: copyright line with the year and site tagline.
  */
 async function Footer() {
   const t = await getTranslations("footer");
   return (
-    <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-500">
-      {t("text")}
+    <footer className="border-t border-line py-6 text-center text-sm text-gray-500">
+      {/* Row 1: navigation links separated by middle-dot. */}
+      <nav className="flex items-center justify-center gap-2 flex-wrap">
+        <Link href="/about" className="hover:text-brand transition-colors">
+          {t("about")}
+        </Link>
+        <span aria-hidden="true">&middot;</span>
+        <Link href="/terms" className="hover:text-brand transition-colors">
+          {t("terms")}
+        </Link>
+        <span aria-hidden="true">&middot;</span>
+        <Link href="/privacy" className="hover:text-brand transition-colors">
+          {t("privacy")}
+        </Link>
+        <span aria-hidden="true">&middot;</span>
+        <a
+          href="mailto:contact@timicy.com"
+          className="hover:text-brand transition-colors"
+        >
+          {t("contact")}
+        </a>
+      </nav>
+      {/* Row 2: copyright and tagline. */}
+      <p className="mt-2">{t("copyright")}</p>
     </footer>
   );
 }
