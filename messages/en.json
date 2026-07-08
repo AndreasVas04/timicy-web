@@ -5,6 +5,11 @@
     "categories": "Categories",
     "searchToggle": "Search"
   },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you're looking for doesn't exist or has been moved.",
+    "backHome": "Back to home"
+  },
   "home": {
     "title": "Find the best price in Cyprus",
     "tagline": "Compare prices on electronics and appliances from Cypriot stores."
@@ -19,7 +24,6 @@
     "sortPriceDesc": "Price: high to low",
     "fromPrice": "from {price}",
     "inStores": "{count, plural, one {in # store} other {in # stores}}",
-    "saveAmount": "save {amount}",
     "empty": "No products found in this category.",
     "prev": "Previous",
     "next": "Next",
@@ -28,7 +32,8 @@
     "metaDescription": "Compare {category} prices from electronics stores in Cyprus. Check availability, price history and find the cheapest deal on TimiCY.",
     "browseCategories": "Categories",
     "unavailable": "Out of stock",
-    "noImage": "No image"
+    "noImage": "No image",
+    "paginationLabel": "Pagination"
   },
   "product": {
     "bestPrice": "Best price",
@@ -55,7 +60,8 @@
     "rangeMonth": "Month",
     "range6mo": "6 months",
     "rangeYear": "Year",
-    "rangeAll": "All"
+    "rangeAll": "All",
+    "noImage": "No image"
   },
   "search": {
     "metaTitle": "Product search — TimiCY",
@@ -69,7 +75,9 @@
     "minCharsPrompt": "Type at least 2 characters to search.",
     "prev": "Previous",
     "next": "Next",
-    "pageOf": "Page {current} of {total}"
+    "pageOf": "Page {current} of {total}",
+    "noImage": "No image",
+    "paginationLabel": "Pagination"
   },
   "alerts": {
     "formTitle": "Price alert",

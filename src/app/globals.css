@@ -19,6 +19,7 @@
   /* Semantic colors */
   --color-price: #15803D;        /* emerald — reserved for prices / best-price only */
   --color-save: #E0871E;         /* amber — reserved for savings badges ("save €X") only */
+  --color-save-dark: #B96A12;    /* darker amber — for small savings text where the base amber fails contrast on white */
 
   /* Surfaces */
   --color-page: #F7F8FA;         /* very light cool gray — page background */

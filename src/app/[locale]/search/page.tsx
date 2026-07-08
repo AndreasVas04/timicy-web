@@ -145,7 +145,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                       className="object-contain transition-transform duration-200 group-hover:scale-[1.03]"
                     />
                   ) : (
-                    <span className="text-gray-400 text-xs">No image</span>
+                    <span className="text-gray-400 text-xs">{t("noImage")}</span>
                   )}
                   {/* Savings chip — only shown when the price spread is
                       meaningful enough to be worth highlighting.
@@ -214,19 +214,19 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
           the RPC already ranks by prefix match > substring > trigram sim). */}
       {totalPages > 1 && (
         <nav
-          aria-label="Pagination"
+          aria-label={t("paginationLabel")}
           className="flex items-center justify-center gap-2 py-6"
         >
-          {/* Previous page */}
+          {/* Previous page — active state uses the surface/brand palette; disabled stays muted. */}
           {page > 1 ? (
             <Link
               href={buildUrl(page - 1)}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
             >
               {t("prev")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-gray-200 rounded text-gray-300">
+            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
               {t("prev")}
             </span>
           )}
@@ -236,16 +236,16 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
             {t("pageOf", { current: page, total: totalPages })}
           </span>
 
-          {/* Next page */}
+          {/* Next page — active state uses the surface/brand palette; disabled stays muted. */}
           {page < totalPages ? (
             <Link
               href={buildUrl(page + 1)}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+              className="px-3 py-1 text-sm border border-line rounded-lg bg-surface hover:border-brand hover:text-brand transition-colors"
             >
               {t("next")}
             </Link>
           ) : (
-            <span className="px-3 py-1 text-sm border border-gray-200 rounded text-gray-300">
+            <span className="px-3 py-1 text-sm border border-line rounded-lg text-gray-300">
               {t("next")}
             </span>
           )}

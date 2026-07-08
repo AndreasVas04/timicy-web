@@ -15,6 +15,7 @@ import { decodeEntities } from "@/lib/decode-entities";
 import { OG_FALLBACK_IMAGE, OG_LOCALE } from "@/lib/og";
 import { SITE_URL } from "@/lib/site-url";
 import { buildProductJsonLd } from "@/lib/structured-data";
+import { isValidCategory, getCategoryLabel, type CategorySlug } from "@/lib/categories";
 import Image from "next/image";
 import PriceAlertForm from "@/components/PriceAlertForm";
 import PriceHistoryChart from "@/components/PriceHistoryChartLazy";
@@ -220,12 +221,13 @@ export default async function ProductPage({ params }: PageProps) {
     ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(new Date(lastScraped))
     : null;
 
-  // Humanize the category slug for display (e.g. "washing_machines" -> "Washing Machines").
-  // Localized category labels will be added in a later prompt.
+  // Display the category using the same localized labels that the category
+  // pages use (from src/lib/categories.ts). Falls back to a simple slug
+  // humanization for any category not in the known list.
   const humanCategory = product.category
-    ? product.category
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c: string) => c.toUpperCase())
+    ? isValidCategory(product.category)
+      ? getCategoryLabel(product.category as CategorySlug, locale)
+      : product.category.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
     : null;
 
   /* --- Render ----------------------------------------------------------- */
@@ -259,7 +261,7 @@ export default async function ProductPage({ params }: PageProps) {
               className="object-contain p-2"
             />
           ) : (
-            <span className="text-gray-400 text-sm">No image</span>
+            <span className="text-gray-400 text-sm">{t("noImage")}</span>
           )}
         </div>
 
@@ -282,7 +284,7 @@ export default async function ProductPage({ params }: PageProps) {
               </p>
               <p className="text-sm text-gray-600 mt-1">{t("atStore", { store: bestOffer.store })}</p>
               {savings != null && savings >= 1 && (
-                <p className="text-sm font-medium mt-1" style={{ color: "#B96A12" }}>
+                <p className="text-sm font-medium mt-1 text-save-dark">
                   {t("saveVsMax", { amount: savings.toFixed(0) })}
                 </p>
               )}

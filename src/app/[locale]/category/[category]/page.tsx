@@ -345,7 +345,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       {/* Pagination controls */}
       {totalPages > 1 && (
         <nav
-          aria-label="Pagination"
+          aria-label={t("paginationLabel")}
           className="flex items-center justify-center gap-2 py-6"
         >
           {/* Previous page — active state uses the surface/brand palette; disabled stays muted. */}
