@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { HeaderSearch } from "@/components/HeaderSearch";
+import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { CategoriesDropdown } from "@/components/CategoriesDropdown";
 import { NavigationTracker } from "@/components/NavigationTracker";
 import { Inter, Manrope } from "next/font/google";
@@ -96,12 +97,15 @@ export default async function LocaleLayout({
           <NavigationTracker />
 
           {/* Site header — sticky so search and navigation stay reachable
-              while scrolling. `sticky` is a positioned box, so the mobile
-              search panel can still be absolutely positioned below the
-              header bar (previously done via `relative`); z-40 keeps the
-              bar above page content (the hero band, product images).
+              while scrolling. z-40 keeps it above page content (the hero
+              band, product images).
               The 3px teal strip along the very top edge is the brand's
-              "index line": a small constant marker on every page. */}
+              "index line": a small constant marker on every page.
+              On mobile, a full-width search row sits below the logo bar
+              (same pattern as Public, Skroutz, BestPrice) so search is
+              always visible without tapping a toggle. On desktop (>= md)
+              the search input sits inline in the logo bar and the second
+              row is hidden. */}
           <header className="sticky top-0 z-40 bg-surface border-b border-line">
             <div aria-hidden="true" className="h-[3px] bg-brand" />
             {/* Header inner container — tighter horizontal padding on narrow
@@ -127,8 +131,9 @@ export default async function LocaleLayout({
                 />
               </Link>
 
-              {/* Persistent search — visible inline on desktop, toggle on mobile.
-                  HeaderSearch is a client component that wraps SearchAutocomplete. */}
+              {/* Desktop search — visible inline on md+, hidden on mobile.
+                  HeaderSearch renders only the desktop block; the mobile
+                  search row is a separate element below (see next block). */}
               <HeaderSearch />
 
               {/* Right-side navigation: categories dropdown, a hairline divider,
@@ -140,6 +145,17 @@ export default async function LocaleLayout({
                 <span aria-hidden="true" className="h-5 w-px bg-line"></span>
                 <LocaleSwitcher />
               </div>
+            </div>
+
+            {/* Mobile search row — always visible below the logo bar on
+                viewports narrower than md. Renders a full-width
+                SearchAutocomplete so search is immediately discoverable
+                without tapping a toggle (the standard mobile comparison-
+                site pattern). Hidden on desktop where the inline search
+                in the logo bar takes over. Horizontal padding matches the
+                header inner container for alignment. */}
+            <div className="md:hidden px-3 sm:px-4 pb-2.5">
+              <SearchAutocomplete instanceId="header-mobile" compact />
             </div>
           </header>
 
