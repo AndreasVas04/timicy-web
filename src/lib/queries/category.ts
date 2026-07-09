@@ -214,12 +214,29 @@ export const getCategoryProducts = unstable_cache(
 );
 
 /**
- * Fetch all distinct brand values for a given category.
+ * Fetch all distinct brand values for a given category, ordered by
+ * popularity (product count descending, alphabetical tie-break).
  *
- * Used to build the slug-to-canonical map for brand filter resolution.
+ * Used to build the slug-to-canonical map for brand filter resolution
+ * and to populate the brand checkbox list in the filter panel. The
+ * product count serves as the popularity proxy (same spirit as the
+ * offer_count popular sort on the product grid), so the first brands
+ * shown before the show-more expander are the ones users most likely
+ * want to filter by.
+ *
+ * Only brands that have at least one product with has_available_offer = true
+ * are included. This prevents the filter panel from showing brands whose
+ * products are all unavailable, which would produce an empty result page
+ * under the default stock=in listing. Accepted trade-off: when stock=all
+ * is active, brands with only unavailable products will not have a
+ * checkbox in the panel, though their ?brand= URLs still work correctly
+ * if hand-typed.
+ *
  * Since supabase-js has no DISTINCT operator and creating a database RPC
  * is out of scope, this fetches the brand column with pagination (PostgREST
- * caps at 1000 rows per request) and deduplicates in TypeScript.
+ * caps at 1000 rows per request), counts occurrences per brand in
+ * TypeScript, then sorts by count descending with an alphabetical
+ * localeCompare tie-break for determinism.
  *
  * Cached per category (at most 21 entries) with the same "catalog" tag
  * so the nightly revalidation refreshes brand lists automatically.
@@ -232,6 +249,8 @@ export const getCategoryBrands = unstable_cache(
     // Paginate through all products in the category, fetching only the
     // brand column. PostgREST caps at 1000 rows per request; the largest
     // category has ~2400 products, so this takes 2-3 requests.
+    // Only products with at least one available offer are included so
+    // the brand list aligns with the default (stock=in) product listing.
     const batchSize = 1000;
     let offset = 0;
     let hasMore = true;
@@ -241,6 +260,7 @@ export const getCategoryBrands = unstable_cache(
         .from("products")
         .select("brand")
         .eq("category", category)
+        .eq("has_available_offer", true)
         .not("brand", "is", null)
         .order("brand")
         .range(offset, offset + batchSize - 1);
@@ -262,15 +282,20 @@ export const getCategoryBrands = unstable_cache(
       }
     }
 
-    // Deduplicate while preserving the alphabetical order from the query.
-    const seen = new Set<string>();
-    const unique: string[] = [];
+    // Count how many listed products each brand has. This product count
+    // is the popularity proxy: brands with more products appear first in
+    // the filter panel, before the show-more expander.
+    const countByBrand = new Map<string, number>();
     for (const brand of allBrands) {
-      if (!seen.has(brand)) {
-        seen.add(brand);
-        unique.push(brand);
-      }
+      countByBrand.set(brand, (countByBrand.get(brand) ?? 0) + 1);
     }
+
+    // Sort by product count descending; ties broken alphabetically via
+    // localeCompare for deterministic, locale-aware ordering.
+    const unique = [...countByBrand.keys()].sort((a, b) => {
+      const diff = (countByBrand.get(b) ?? 0) - (countByBrand.get(a) ?? 0);
+      return diff !== 0 ? diff : a.localeCompare(b);
+    });
 
     return unique;
   },

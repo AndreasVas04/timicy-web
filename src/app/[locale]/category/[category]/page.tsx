@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { SortSelect } from "@/components/SortSelect";
+import { FilterPanel } from "@/components/FilterPanel";
 import {
   isValidCategory,
   getCategoryLabel,
@@ -19,6 +20,7 @@ import { parsePageParam } from "@/lib/page-param";
 import { parseFilterParams, buildCategoryUrl } from "@/lib/filter-params";
 import {
   getCategoryProducts,
+  getCategoryBrands,
   queryCategoryProducts,
   isValidSort,
   type CategorySort,
@@ -166,6 +168,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   // stock). Invalid values are silently dropped by the parser.
   const filters = parseFilterParams(search);
 
+  // Fetch the canonical brand list for this category so the filter
+  // panel can render brand checkboxes. This is a cached, server-side
+  // call -- the client component receives the result as a prop.
+  const categoryBrands = await getCategoryBrands(category);
+
   // Fetch products for this category, page, sort order, and filters.
   // When filters are active, go directly through the raw uncached query
   // (filtered requests are long-tail and would not benefit from caching).
@@ -220,20 +227,46 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     { key: "price_desc", label: t("sortPriceDesc") },
   ];
 
+  /* --- Filter panel labels ------------------------------------------------- */
+
+  // Pre-translate all filter labels so the client component stays free
+  // of i18n hooks and namespace awareness.
+  const filterLabels = {
+    filtersTitle: t("filtersTitle"),
+    filterBrand: t("filterBrand"),
+    filterBrandSearch: t("filterBrandSearch"),
+    filterPrice: t("filterPrice"),
+    filterMin: t("filterMin"),
+    filterMax: t("filterMax"),
+    filterApply: t("filterApply"),
+    filterClear: t("filterClear"),
+    showUnavailable: t("showUnavailable"),
+    showMore: t("showMore"),
+    showLess: t("showLess"),
+  };
+
   /* --- Render ------------------------------------------------------------- */
 
-  return (
-    <div>
-      {/* Page header row: heading left, sort control right (wraps on
-          small screens). The heading uses the identity voice: heading
-          face, extrabold, tight tracking. */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{label}</h1>
+  // FilterPanel owns the page layout: it places the heading and sort
+  // control in the header row, renders the filter sidebar (desktop) or
+  // disclosure panel (mobile), and slots the product grid + pagination
+  // into the main content area beside (desktop) or below (mobile) the
+  // sidebar. Server-rendered children are passed through the "donut"
+  // pattern so the product grid stays a server component.
 
-        {/* Sort dropdown — a native <select> replaces the previous
-            segmented control, which overflowed at 375px with the longer
-            Greek labels. The dropdown handles long text gracefully on
-            every viewport width and platform. */}
+  return (
+    <FilterPanel
+      category={category}
+      sort={sort}
+      filters={filters}
+      brands={categoryBrands}
+      labels={filterLabels}
+      heading={
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+          {label}
+        </h1>
+      }
+      sortSlot={
         <SortSelect
           label={t("sortLabel")}
           options={sortOptions.map((opt) => ({
@@ -248,8 +281,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           }))}
           currentValue={sort}
         />
-      </div>
-
+      }
+    >
       {/* Empty state: quiet message on a dashed sheet. */}
       {products.length === 0 && (
         <p className="rounded-lg border border-dashed border-line py-16 text-center text-mute">
@@ -257,22 +290,23 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         </p>
       )}
 
-      {/* Product grid — shared ProductCard, ledger layout (see component). */}
+      {/* Product grid -- shared ProductCard, ledger layout.
+          Grid columns adjust for the sidebar: 3 cols at lg (sidebar
+          present), 4 cols at xl where there is enough room. */}
       {products.length > 0 && (
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mb-8">
           {products.map((product) => {
             const unavailable = product.has_available_offer === false;
 
-            /* Savings chip — only shown when the price spread is
+            /* Savings chip -- only shown when the price spread is
                meaningful enough to be worth highlighting AND the
                product has at least one available offer. Showing a
                savings claim on an unbuyable product is misleading.
-               • Absolute arm (>= €10): catches big-ticket items where
-                 5 % would be too strict (e.g. €200 -> €191 = €9, skip).
-               • Percentage arm (>= 5 % of max AND >= €2): catches cheap
-                 items where €10 would never trigger (e.g. €25 -> €20 = €5).
-               A chip that says "−€0" or "−€1" undermines trust, so
-               both arms enforce a sensible floor. */
+               Absolute arm (>= 10 euros): catches big-ticket items.
+               Percentage arm (>= 5% of max AND >= 2 euros): catches
+               cheap items where 10 euros would never trigger.
+               A chip that says "0 euros" or "1 euro" undermines trust,
+               so both arms enforce a sensible floor. */
             let savingsText: string | null = null;
             if (
               !unavailable &&
@@ -319,8 +353,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         </ul>
       )}
 
-      {/* Pagination controls — matches the segmented sort control:
-          bordered prev/next buttons flanking a tabular page indicator. */}
+      {/* Pagination controls: bordered prev/next buttons flanking a
+          tabular page indicator. */}
       {totalPages > 1 && (
         <nav
           aria-label={t("paginationLabel")}
@@ -339,7 +373,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             </span>
           )}
 
-          {/* Page indicator */}
           <span className="px-1 text-sm tabular-nums text-mute">
             {t("pageOf", { current: page, total: totalPages })}
           </span>
@@ -358,6 +391,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           )}
         </nav>
       )}
-    </div>
+    </FilterPanel>
   );
 }

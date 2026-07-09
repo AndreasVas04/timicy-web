@@ -47,7 +47,18 @@
     "metaDescription": "Compare {category} prices from electronics stores in Cyprus. Check availability, price history and find the cheapest deal on TimiCY.",
     "unavailable": "Out of stock",
     "noImage": "No image",
-    "paginationLabel": "Pagination"
+    "paginationLabel": "Pagination",
+    "filtersTitle": "Filters",
+    "filterBrand": "Brand",
+    "filterBrandSearch": "Search brands",
+    "filterPrice": "Price",
+    "filterMin": "From",
+    "filterMax": "To",
+    "filterApply": "Apply",
+    "filterClear": "Clear",
+    "showUnavailable": "Show unavailable",
+    "showMore": "Show more",
+    "showLess": "Show less"
   },
   "product": {
     "bestPrice": "Best price",

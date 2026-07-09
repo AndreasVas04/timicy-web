@@ -47,7 +47,18 @@
     "metaDescription": "Σύγκρινε τιμές για {category} από κυπριακά καταστήματα ηλεκτρονικών. Δες διαθεσιμότητα, ιστορικό τιμών και βρες τη φθηνότερη προσφορά στο TimiCY.",
     "unavailable": "Μη διαθέσιμο",
     "noImage": "Χωρίς εικόνα",
-    "paginationLabel": "Σελιδοποίηση"
+    "paginationLabel": "Σελιδοποίηση",
+    "filtersTitle": "Φίλτρα",
+    "filterBrand": "Μάρκα",
+    "filterBrandSearch": "Αναζήτηση μάρκας",
+    "filterPrice": "Τιμή",
+    "filterMin": "Από",
+    "filterMax": "Έως",
+    "filterApply": "Εφαρμογή",
+    "filterClear": "Καθαρισμός",
+    "showUnavailable": "Εμφάνιση μη διαθέσιμων",
+    "showMore": "Περισσότερα",
+    "showLess": "Λιγότερα"
   },
   "product": {
     "bestPrice": "Καλύτερη τιμή",
