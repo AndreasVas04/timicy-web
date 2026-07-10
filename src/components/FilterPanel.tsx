@@ -34,6 +34,7 @@ import {
   brandToSlug,
   type FilterParams,
 } from "@/lib/filter-params";
+import type { PriceBounds } from "@/lib/queries/category";
 
 /* -------------------------------------------------------------------------- */
 /*  Constants                                                                 */
@@ -113,6 +114,7 @@ export function FilterPanel({
   sort,
   filters,
   brands,
+  priceBounds,
   labels,
   heading,
   sortSlot,
@@ -126,6 +128,8 @@ export function FilterPanel({
   filters: FilterParams;
   /** Brand names for this category, ordered by product count. */
   brands: string[];
+  /** Min/max price across available products for the slider range. */
+  priceBounds: PriceBounds;
   /** Pre-translated UI label strings from the category namespace. */
   labels: FilterLabels;
   /** The page heading element, placed in the header row. */
@@ -158,6 +162,13 @@ export function FilterPanel({
     max: filters.max !== null ? String(filters.max) : "",
     stock: filters.stock,
   }));
+
+  /** Which price field currently has focus, or null if neither.
+   *  Used by the focused-empty pattern: a focused field with no
+   *  pending value shows an empty box (not the bound fallback),
+   *  so the user can type freely without fighting a pre-filled
+   *  value. The fallback reappears on blur. */
+  const [focusedField, setFocusedField] = useState<"min" | "max" | null>(null);
 
   /* ---- Refs for focus management --------------------------------------- */
 
@@ -253,15 +264,63 @@ export function FilterPanel({
   const needsExpander =
     !brandSearch && filteredBrands.length > BRAND_VISIBLE_COUNT;
 
+  /* ---- Slider derived values ------------------------------------------- */
+
+  /** Adaptive step so the slider snaps to round, useful filter values
+   *  (e.g. €2350 not €2347). Exact values are still reachable via the
+   *  text inputs, which remain authoritative. ≤500→1, ≤2000→5, >2000→10.
+   *  Computed first because the endpoints are rounded to step multiples. */
+  const rawMin = priceBounds.min != null ? Math.floor(priceBounds.min) : 0;
+  const rawMax = priceBounds.max != null ? Math.ceil(priceBounds.max) : 0;
+  const rawRange = rawMax - rawMin;
+  const sliderStep =
+    rawRange <= 500 ? 1 : rawRange <= 2000 ? 5 : 10;
+
+  /** Slider endpoints rounded OUTWARD to step multiples so every
+   *  snapped drag value lands on a round number (e.g. 240, 250, 2350
+   *  instead of 239, 249, 2349). The bar may widen slightly beyond
+   *  the true price bounds — this is harmless and intentional. */
+  const sliderMin = Math.floor(rawMin / sliderStep) * sliderStep;
+  const sliderMax = Math.ceil(rawMax / sliderStep) * sliderStep;
+
+  /** Current slider handle positions, clamped to the valid range.
+   *  Falls back to the range endpoints when the pending input is
+   *  empty or not a valid number, so the handles rest at the edges
+   *  in the "no filter" state. */
+  const sliderLow = Math.max(
+    sliderMin,
+    Math.min(sliderMax, parsePriceStr(pending.min) ?? sliderMin)
+  );
+  const sliderHigh = Math.max(
+    sliderMin,
+    Math.min(sliderMax, parsePriceStr(pending.max) ?? sliderMax)
+  );
+
+  /** Effective price after applying the bound-equal convention:
+   *  a value equal to the corresponding slider endpoint is treated
+   *  as "no filter" (null). This keeps URLs clean — min=<sliderMin>
+   *  filters nothing — and prevents the inputs from appearing dirty
+   *  when they simply display the natural range. */
+  const effectiveMin = (() => {
+    const v = parsePriceStr(pending.min);
+    return v !== null && v === sliderMin ? null : v;
+  })();
+  const effectiveMax = (() => {
+    const v = parsePriceStr(pending.max);
+    return v !== null && v === sliderMax ? null : v;
+  })();
+
   /** Whether the pending state differs from the applied filters.
    *  Controls the enabled/disabled state of the Apply button so
    *  the user can tell their tap registered even though nothing
-   *  navigates until Apply. */
+   *  navigates until Apply. Price comparison uses the effective
+   *  (bound-normalized) values so resting at a bound edge does
+   *  not count as dirty. */
   const isDirty =
     [...pending.brands].sort().join(",") !==
       [...filters.brands].sort().join(",") ||
-    parsePriceStr(pending.min) !== filters.min ||
-    parsePriceStr(pending.max) !== filters.max ||
+    effectiveMin !== filters.min ||
+    effectiveMax !== filters.max ||
     pending.stock !== filters.stock;
 
   /* ---- Navigation helpers ----------------------------------------------- */
@@ -308,7 +367,10 @@ export function FilterPanel({
     }));
   }
 
-  /** Update the pending min price string (does not navigate). */
+  /** Update the pending min price string (does not navigate).
+   *  Stores the raw string verbatim — no coercion, no clamping.
+   *  All normalization happens on blur and in handleApply so the
+   *  user can type freely without the input fighting back. */
   function handleMinChange(value: string) {
     setPending((p) => ({ ...p, min: value }));
   }
@@ -318,21 +380,51 @@ export function FilterPanel({
     setPending((p) => ({ ...p, max: value }));
   }
 
+  /** Normalize a price input on blur: strip leading zeros, and
+   *  reset to empty if the value equals the slider endpoint
+   *  (bound-equal = no filter). Called only on blur and Apply,
+   *  never mid-typing. */
+  function normalizePriceField(
+    field: "min" | "max",
+    boundValue: number,
+  ) {
+    setPending((p) => {
+      const raw = p[field];
+      if (!raw) return p;
+      const n = parseInt(raw, 10);
+      // Non-numeric or bound-equal → clear to empty (shows bound
+      // fallback, counts as no-filter).
+      if (!Number.isFinite(n) || n < 0 || n === boundValue) {
+        return { ...p, [field]: "" };
+      }
+      // Strip leading zeros by re-stringifying the parsed integer.
+      const clean = String(n);
+      return clean === raw ? p : { ...p, [field]: clean };
+    });
+  }
+
   /** Apply all pending filters in a single navigation.
-   *  Parses and validates price strings; swaps min/max if inverted
-   *  so the user always gets results. Closes the mobile panel so
-   *  the user lands back on the filtered results. */
+   *  All price normalization happens here (and on blur), never
+   *  mid-typing: leading-zero strip, min/max swap if inverted,
+   *  bound-equal suppression. Closes the mobile panel so the
+   *  user lands back on the filtered results. */
   function handleApply() {
     let min = parsePriceStr(pending.min);
     let max = parsePriceStr(pending.max);
     if (min !== null && max !== null && min > max) {
       [min, max] = [max, min];
-      setPending((p) => ({
-        ...p,
-        min: min !== null ? String(min) : "",
-        max: max !== null ? String(max) : "",
-      }));
     }
+    // Bound-equal convention: suppress values that match the slider
+    // endpoints since they do not narrow the result set.
+    if (min !== null && min === sliderMin) min = null;
+    if (max !== null && max === sliderMax) max = null;
+    // Reset pending strings so inputs show bounds via the display
+    // fallback rather than carrying the literal bound value.
+    setPending((p) => ({
+      ...p,
+      min: min !== null ? String(min) : "",
+      max: max !== null ? String(max) : "",
+    }));
     navigateWithFilters({
       brands: [...pending.brands].sort(),
       min,
@@ -366,7 +458,7 @@ export function FilterPanel({
         {/* -- Brand checkboxes ------------------------------------------- */}
         {brands.length > 0 && (
           <fieldset className="border-b border-line px-4 pt-5 pb-4">
-            <legend className="mb-3 text-sm font-semibold text-ink">
+            <legend className="mb-2 text-sm font-semibold text-ink">
               {labels.filterBrand}
             </legend>
 
@@ -430,52 +522,188 @@ export function FilterPanel({
 
         {/* -- Price range ------------------------------------------------ */}
         <fieldset className="border-b border-line px-4 pt-5 pb-4">
-          <legend className="mb-3 text-sm font-semibold text-ink">
+          <legend className="mb-2 text-sm font-semibold text-ink">
             {labels.filterPrice}
           </legend>
 
-          {/* Controlled price inputs bound to pending state */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor={`${idPrefix}filter-min`} className="sr-only">
-              {labels.filterMin}
-            </label>
-            <input
-              id={`${idPrefix}filter-min`}
-              type="number"
-              inputMode="numeric"
-              min="0"
-              step="1"
-              placeholder={labels.filterMin}
-              value={pending.min}
-              onChange={(e) => handleMinChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleApply();
-              }}
-              className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5
-                         text-sm tabular-nums text-ink placeholder:text-faint
-                         focus-visible:outline-none focus-visible:ring-2
-                         focus-visible:ring-brand focus-visible:ring-offset-1"
-            />
-            <label htmlFor={`${idPrefix}filter-max`} className="sr-only">
-              {labels.filterMax}
-            </label>
-            <input
-              id={`${idPrefix}filter-max`}
-              type="number"
-              inputMode="numeric"
-              min="0"
-              step="1"
-              placeholder={labels.filterMax}
-              value={pending.max}
-              onChange={(e) => handleMaxChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleApply();
-              }}
-              className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5
-                         text-sm tabular-nums text-ink placeholder:text-faint
-                         focus-visible:outline-none focus-visible:ring-2
-                         focus-visible:ring-brand focus-visible:ring-offset-1"
-            />
+          {/* Dual-handle range slider (progressive: hidden when
+              bounds are unavailable or the range is zero). Two
+              overlapped native <input type="range"> elements: the
+              low handle controls pending.min, the high handle
+              controls pending.max. pointer-events are restricted
+              to the thumb so only the closest handle captures a
+              drag. The filled track segment is an absolutely
+              positioned div whose left/width are set via inline
+              style. */}
+          {sliderMin < sliderMax && (
+            <div className="relative mb-3 h-5">
+              {/* Track background + filled segment, vertically
+                  centered within the thumb-height container. */}
+              <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-line">
+                <div
+                  className="absolute h-full rounded-full bg-brand"
+                  style={{
+                    left: `${((sliderLow - sliderMin) / (sliderMax - sliderMin)) * 100}%`,
+                    width: `${((sliderHigh - sliderLow) / (sliderMax - sliderMin)) * 100}%`,
+                  }}
+                />
+              </div>
+
+              {/* Overlapped range inputs filling the same container
+                  so the native thumb centers on the track bar. */}
+                <input
+                  id={`${idPrefix}slider-low`}
+                  type="range"
+                  min={sliderMin}
+                  max={sliderMax}
+                  step={sliderStep}
+                  value={sliderLow}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (v <= sliderHigh) {
+                      // Reset to empty at the low edge so the bound-equal
+                      // convention treats it as "no filter".
+                      handleMinChange(v === sliderMin ? "" : String(v));
+                    }
+                  }}
+                  aria-label={labels.filterMin}
+                  className="absolute inset-0 m-0 w-full appearance-none bg-transparent
+                             pointer-events-none
+                             [&::-webkit-slider-runnable-track]:bg-transparent
+                             [&::-webkit-slider-thumb]:pointer-events-auto
+                             [&::-webkit-slider-thumb]:appearance-none
+                             [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
+                             [&::-webkit-slider-thumb]:rounded-full
+                             [&::-webkit-slider-thumb]:bg-brand
+                             [&::-webkit-slider-thumb]:shadow-sm
+                             [&::-webkit-slider-thumb]:cursor-pointer
+                             [&::-moz-range-track]:bg-transparent
+                             [&::-moz-range-track]:border-0
+                             [&::-moz-range-thumb]:pointer-events-auto
+                             [&::-moz-range-thumb]:appearance-none
+                             [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4
+                             [&::-moz-range-thumb]:rounded-full
+                             [&::-moz-range-thumb]:bg-brand
+                             [&::-moz-range-thumb]:border-0
+                             [&::-moz-range-thumb]:shadow-sm
+                             [&::-moz-range-thumb]:cursor-pointer"
+                />
+                <input
+                  id={`${idPrefix}slider-high`}
+                  type="range"
+                  min={sliderMin}
+                  max={sliderMax}
+                  step={sliderStep}
+                  value={sliderHigh}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (v >= sliderLow) {
+                      // Reset to empty at the high edge so the bound-equal
+                      // convention treats it as "no filter".
+                      handleMaxChange(v === sliderMax ? "" : String(v));
+                    }
+                  }}
+                  aria-label={labels.filterMax}
+                  className="absolute inset-0 m-0 w-full appearance-none bg-transparent
+                             pointer-events-none
+                             [&::-webkit-slider-runnable-track]:bg-transparent
+                             [&::-webkit-slider-thumb]:pointer-events-auto
+                             [&::-webkit-slider-thumb]:appearance-none
+                             [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
+                             [&::-webkit-slider-thumb]:rounded-full
+                             [&::-webkit-slider-thumb]:bg-brand
+                             [&::-webkit-slider-thumb]:shadow-sm
+                             [&::-webkit-slider-thumb]:cursor-pointer
+                             [&::-moz-range-track]:bg-transparent
+                             [&::-moz-range-track]:border-0
+                             [&::-moz-range-thumb]:pointer-events-auto
+                             [&::-moz-range-thumb]:appearance-none
+                             [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4
+                             [&::-moz-range-thumb]:rounded-full
+                             [&::-moz-range-thumb]:bg-brand
+                             [&::-moz-range-thumb]:border-0
+                             [&::-moz-range-thumb]:shadow-sm
+                             [&::-moz-range-thumb]:cursor-pointer"
+                />
+            </div>
+          )}
+
+          {/* Controlled price inputs with the focused-empty pattern:
+              - pending has a value → show it (user is editing);
+              - field is focused, pending empty → show "" (empty box,
+                user starts typing from scratch);
+              - not focused, pending empty → show the slider bound as
+                a fallback so the user sees the range at rest.
+              onChange stores the raw string verbatim (no coercion);
+              all normalization (leading-zero strip, bound-equal
+              reset) happens on blur and in handleApply only. */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label htmlFor={`${idPrefix}filter-min`} className="sr-only">
+                {labels.filterMin}
+              </label>
+              <input
+                id={`${idPrefix}filter-min`}
+                type="number"
+                inputMode="numeric"
+                min="0"
+                step="1"
+                placeholder={labels.filterMin}
+                value={
+                  pending.min
+                    ? pending.min
+                    : focusedField === "min"
+                      ? ""
+                      : sliderMin < sliderMax ? String(sliderMin) : ""
+                }
+                onFocus={() => setFocusedField("min")}
+                onChange={(e) => handleMinChange(e.target.value)}
+                onBlur={() => {
+                  setFocusedField(null);
+                  normalizePriceField("min", sliderMin);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleApply();
+                }}
+                className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5
+                           text-sm tabular-nums text-ink placeholder:text-faint
+                           focus-visible:outline-none focus-visible:ring-2
+                           focus-visible:ring-brand focus-visible:ring-offset-1"
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor={`${idPrefix}filter-max`} className="sr-only">
+                {labels.filterMax}
+              </label>
+              <input
+                id={`${idPrefix}filter-max`}
+                type="number"
+                inputMode="numeric"
+                min="0"
+                step="1"
+                placeholder={labels.filterMax}
+                value={
+                  pending.max
+                    ? pending.max
+                    : focusedField === "max"
+                      ? ""
+                      : sliderMin < sliderMax ? String(sliderMax) : ""
+                }
+                onFocus={() => setFocusedField("max")}
+                onChange={(e) => handleMaxChange(e.target.value)}
+                onBlur={() => {
+                  setFocusedField(null);
+                  normalizePriceField("max", sliderMax);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleApply();
+                }}
+                className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5
+                           text-sm tabular-nums text-ink placeholder:text-faint
+                           focus-visible:outline-none focus-visible:ring-2
+                           focus-visible:ring-brand focus-visible:ring-offset-1"
+              />
+            </div>
           </div>
         </fieldset>
 

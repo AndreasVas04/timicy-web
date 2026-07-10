@@ -305,3 +305,96 @@ export const getCategoryBrands = unstable_cache(
     revalidate: 3600,
   }
 );
+
+/* -------------------------------------------------------------------------- */
+/*  Price bounds                                                              */
+/* -------------------------------------------------------------------------- */
+
+/** Shape returned by the price-bounds queries. */
+export type PriceBounds = { min: number | null; max: number | null };
+
+/**
+ * Raw, uncached query for the min and max price across a category's
+ * available products. Optionally narrows by brand (resolved from
+ * slugs the same way the product query does) but intentionally
+ * ignores the price filter — the slider needs the full range.
+ *
+ * Two single-row queries are issued (ASC limit 1 + DESC limit 1)
+ * instead of an aggregate function because PostgREST/supabase-js
+ * doesn't expose SQL MIN/MAX and an RPC is out of scope.
+ */
+export async function queryCategoryPriceBounds({
+  category,
+  filters,
+}: {
+  category: string;
+  filters?: FilterParams;
+}): Promise<PriceBounds> {
+  const supabase = createAnonClient();
+
+  // Brand filter: resolve slugs → canonical names just like the
+  // product query. Stock and price filters are intentionally omitted
+  // so the slider shows the full available range.
+  let resolvedBrands: string[] | null = null;
+  if (filters && filters.brands.length > 0) {
+    const allBrands = await getCategoryBrands(category);
+    const slugMap = buildSlugMap(allBrands);
+    const resolved = filters.brands
+      .map((slug) => slugMap.get(slug))
+      .filter((v): v is string => v != null);
+    if (resolved.length > 0) resolvedBrands = resolved;
+  }
+
+  // Min price: ASC limit 1
+  let minQ = supabase
+    .from("products")
+    .select("min_price")
+    .eq("category", category)
+    .eq("has_available_offer", true)
+    .not("min_price", "is", null);
+  if (resolvedBrands) minQ = minQ.in("brand", resolvedBrands);
+  const { data: minData } = await minQ
+    .order("min_price", { ascending: true })
+    .limit(1);
+
+  // Max price: DESC limit 1
+  let maxQ = supabase
+    .from("products")
+    .select("min_price")
+    .eq("category", category)
+    .eq("has_available_offer", true)
+    .not("min_price", "is", null);
+  if (resolvedBrands) maxQ = maxQ.in("brand", resolvedBrands);
+  const { data: maxData } = await maxQ
+    .order("min_price", { ascending: false })
+    .limit(1);
+
+  const min =
+    minData && minData.length > 0 && minData[0].min_price != null
+      ? Number(minData[0].min_price)
+      : null;
+  const max =
+    maxData && maxData.length > 0 && maxData[0].min_price != null
+      ? Number(maxData[0].min_price)
+      : null;
+
+  return { min, max };
+}
+
+/**
+ * Cached price-bounds fetch — for the UNFILTERED default path.
+ *
+ * Keyed on category only (at most 21 entries). Filtered requests
+ * go through queryCategoryPriceBounds directly since brand
+ * combinations would explode the cache key space.
+ */
+export const getCategoryPriceBounds = unstable_cache(
+  async (category: string): Promise<PriceBounds> => {
+    return queryCategoryPriceBounds({ category });
+  },
+  ["getCategoryPriceBounds"],
+  {
+    tags: ["catalog"],
+    revalidate: 3600,
+  }
+);

@@ -21,7 +21,9 @@ import { parseFilterParams, buildCategoryUrl } from "@/lib/filter-params";
 import {
   getCategoryProducts,
   getCategoryBrands,
+  getCategoryPriceBounds,
   queryCategoryProducts,
+  queryCategoryPriceBounds,
   isValidSort,
   type CategorySort,
 } from "@/lib/queries/category";
@@ -173,24 +175,30 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   // call -- the client component receives the result as a prop.
   const categoryBrands = await getCategoryBrands(category);
 
-  // Fetch products for this category, page, sort order, and filters.
+  // Fetch products and price bounds for this category in parallel.
   // When filters are active, go directly through the raw uncached query
   // (filtered requests are long-tail and would not benefit from caching).
   // The unfiltered default path uses the cached wrapper for performance.
-  const { rows: products, total } = filters.hasFilters
-    ? await queryCategoryProducts({
-        category,
-        sort,
-        page,
-        pageSize: PAGE_SIZE,
-        filters,
-      })
-    : await getCategoryProducts({
-        category,
-        sort,
-        page,
-        pageSize: PAGE_SIZE,
-      });
+  const [{ rows: products, total }, priceBounds] = filters.hasFilters
+    ? await Promise.all([
+        queryCategoryProducts({
+          category,
+          sort,
+          page,
+          pageSize: PAGE_SIZE,
+          filters,
+        }),
+        queryCategoryPriceBounds({ category, filters }),
+      ])
+    : await Promise.all([
+        getCategoryProducts({
+          category,
+          sort,
+          page,
+          pageSize: PAGE_SIZE,
+        }),
+        getCategoryPriceBounds(category),
+      ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -261,6 +269,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       sort={sort}
       filters={filters}
       brands={categoryBrands}
+      priceBounds={priceBounds}
       labels={filterLabels}
       heading={
         <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
