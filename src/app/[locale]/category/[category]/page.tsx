@@ -248,6 +248,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     filterMax: t("filterMax"),
     filterApply: t("filterApply"),
     filterClear: t("filterClear"),
+    filterAvailability: t("filterAvailability"),
     showUnavailable: t("showUnavailable"),
     showMore: t("showMore"),
     showLess: t("showLess"),
