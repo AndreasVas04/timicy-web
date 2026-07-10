@@ -243,6 +243,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     showUnavailable: t("showUnavailable"),
     showMore: t("showMore"),
     showLess: t("showLess"),
+    filtersClose: t("filtersClose"),
   };
 
   /* --- Render ------------------------------------------------------------- */

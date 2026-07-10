@@ -58,7 +58,8 @@
     "filterClear": "Clear",
     "showUnavailable": "Show unavailable",
     "showMore": "Show more",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "filtersClose": "Close"
   },
   "product": {
     "bestPrice": "Best price",

@@ -58,7 +58,8 @@
     "filterClear": "Καθαρισμός",
     "showUnavailable": "Εμφάνιση μη διαθέσιμων",
     "showMore": "Περισσότερα",
-    "showLess": "Λιγότερα"
+    "showLess": "Λιγότερα",
+    "filtersClose": "Κλείσιμο"
   },
   "product": {
     "bestPrice": "Καλύτερη τιμή",
