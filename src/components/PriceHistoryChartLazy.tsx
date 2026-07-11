@@ -18,11 +18,23 @@ import type PriceHistoryChartType from "./PriceHistoryChart";
 const PriceHistoryChart = dynamic(() => import("./PriceHistoryChart"), {
   ssr: false,
   loading: () => (
-    /* Placeholder mirrors the real chart layout (segmented range control
-       plus the 300px plot sheet) so nothing shifts when the chunk lands. */
-    <div aria-hidden="true">
-      <div className="mb-4 h-9 w-64 max-w-full rounded-md bg-ink/5 animate-pulse" />
-      <div className="w-full h-[300px] rounded-lg border border-line bg-surface animate-pulse" />
+    /* Placeholder mirrors the real chart card exactly — same sheet, same
+       header strip (price block left, range control right, same wrap
+       behavior at narrow widths) and the same fixed 280px plot area — so
+       nothing shifts when the Recharts chunk lands. */
+    <div aria-hidden="true" className="rounded-lg border border-line bg-surface">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-4 pt-4 sm:px-5">
+        {/* Price + delta skeleton: matches the 32px price line and the
+           16px delta line underneath. */}
+        <div>
+          <div className="h-8 w-28 rounded bg-ink/5 animate-pulse" />
+          <div className="mt-0.5 h-4 w-36 rounded bg-ink/5 animate-pulse" />
+        </div>
+        {/* Range segmented-control skeleton (five ~text-xs buttons). */}
+        <div className="h-7 w-56 max-w-full rounded-md bg-ink/5 animate-pulse" />
+      </div>
+      {/* Plot-area skeleton: identical fixed height to the real chart. */}
+      <div className="h-[280px] w-full pt-3" />
     </div>
   ),
 });

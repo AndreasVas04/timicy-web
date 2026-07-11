@@ -2,23 +2,51 @@
 
 /**
  * PriceHistoryChart — client component that renders the cheapest-price
- * time-series as a Recharts step-line chart with time-range toggle buttons.
+ * time-series as a financial-style step-area chart ("Ledger sheet, market
+ * precision" treatment of the Price Ledger design system).
+ *
+ * Visual anatomy, top to bottom, all inside ONE white sheet card:
+ *   1. Header strip — current (last visible) price set loud in the heading
+ *      face with tabular figures, a range-window delta underneath, and the
+ *      time-range segmented control on the right.
+ *   2. Plot area — teal step line with a gradient area fill fading to
+ *      transparent, horizontal-only fine dashed hairlines (ledger rules),
+ *      the price axis on the RIGHT (trading-chart convention), sparse muted
+ *      calendar ticks on the X axis, a dashed lowest-price reference line,
+ *      and a crosshair + navy mini-plate tooltip on hover.
  *
  * All user-facing strings are passed in via the `labels` prop (translated
  * server-side), so this component contains NO hardcoded EL/EN text and does
  * NOT import any next-intl hooks. It is a pure presentational client component.
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
+  Tooltip,
+  ReferenceLine,
 } from "recharts";
 import type { PricePoint } from "@/lib/price-history/reconstruct";
+
+/* -------------------------------------------------------------------------- */
+/*  Chart colors                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Token-matched hex values for SVG presentation attributes.
+ * SVG attributes cannot resolve CSS custom properties (var(--...)), so these
+ * literals mirror the @theme tokens in globals.css exactly — this is the
+ * documented token exception for charts. If a token changes there, update
+ * the matching value here.
+ */
+const COLOR_BRAND = "#0BA4B4"; // --color-brand  (teal line, fill, markers)
+const COLOR_LINE = "#DDE4EB"; //  --color-line   (hairline gridlines)
+const COLOR_FAINT = "#7C8DA1"; // --color-faint  (axis labels, crosshair)
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -219,10 +247,142 @@ function generateYearlyTicks(firstTs: number, lastTs: number): number[] {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Helpers: nice price scale (Y axis)                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Round a raw step size UP to a "nice" human number: 1, 2, 2.5 or 5 times a
+ * power of ten (…, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, …).  Finance
+ * charts always label round price levels; Recharts' auto domain would
+ * happily produce ticks like €123.37, which instantly reads as a default
+ * chart. This is the core of the hand-rolled scale below.
+ */
+function niceStep(rough: number): number {
+  const pow = Math.pow(10, Math.floor(Math.log10(rough)));
+  const frac = rough / pow;
+  if (frac <= 1) return pow;
+  if (frac <= 2) return 2 * pow;
+  if (frac <= 2.5) return 2.5 * pow;
+  if (frac <= 5) return 5 * pow;
+  return 10 * pow;
+}
+
+/**
+ * Build the Y-axis domain and tick values from the visible prices.
+ *
+ * Two cases:
+ *  - FLAT series (min === max, common when a price never moved): center the
+ *    line vertically with two nice steps of headroom on each side, so a
+ *    flat price reads as a deliberate horizontal rule across the middle of
+ *    the sheet rather than a line glued to the chart floor.
+ *  - Normal series: pad ~12% beyond min/max so the line never touches the
+ *    plot edges, then place ticks on nice round multiples inside the domain.
+ *
+ * The domain never goes below zero (prices cannot be negative).
+ */
+function buildPriceScale(prices: number[]): {
+  domain: [number, number];
+  ticks: number[];
+  /** Decimals to use when formatting axis labels (0 for whole-euro steps). */
+  tickDecimals: number;
+} {
+  // Degenerate guard: no visible prices (all-unavailable range).
+  if (prices.length === 0) {
+    return { domain: [0, 1], ticks: [], tickDecimals: 0 };
+  }
+
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+
+  let step: number;
+  let lo: number;
+  let hi: number;
+
+  if (min === max) {
+    // Flat series: two nice steps of air above and below the value.
+    step = niceStep(Math.max(0.5, min * 0.05));
+    lo = Math.max(0, min - 2 * step);
+    hi = max + 2 * step;
+  } else {
+    // Normal series: nice step from the span, ~12% padding on both sides.
+    const span = max - min;
+    step = niceStep(span / 3);
+    const pad = span * 0.12;
+    lo = Math.max(0, min - pad);
+    hi = max + pad;
+  }
+
+  // Place ticks on round multiples of the step inside [lo, hi].
+  // Round to cents to kill floating-point crumbs (e.g. 2.5000000000000004).
+  const ticks: number[] = [];
+  let t = Math.ceil(lo / step) * step;
+  while (t <= hi + 1e-9) {
+    ticks.push(Math.round(t * 100) / 100);
+    t += step;
+  }
+
+  // Whole-euro steps get integer labels ("€850"); sub-euro steps keep cents.
+  const tickDecimals = Number.isInteger(step) ? 0 : 2;
+
+  return { domain: [lo, hi], ticks, tickDecimals };
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Enriched data point with a numeric timestamp for the time-scale axis      */
 /* -------------------------------------------------------------------------- */
 
 type ChartPoint = PricePoint & { ts: number };
+
+/* -------------------------------------------------------------------------- */
+/*  Tooltip content (navy mini price plate)                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Custom tooltip body — a miniature navy price plate echoing the page's main
+ * price treatment: muted date line on top, the price loud in white with
+ * tabular figures, the store attribution quiet underneath. Replaces the
+ * default white Recharts box entirely.
+ *
+ * Recharts calls this with `active` + `payload`; the full ChartPoint rides
+ * along as payload[0].payload. Positioning follows the cursor (Recharts
+ * default), paired with a dashed vertical crosshair via the `cursor` prop.
+ */
+function PlateTooltip({
+  active,
+  payload,
+  dateFormatter,
+  unavailableLabel,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: ChartPoint }>;
+  dateFormatter: Intl.DateTimeFormat;
+  unavailableLabel: string;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const point = payload[0].payload;
+  const formattedDate = dateFormatter.format(new Date(point.date + "T00:00:00Z"));
+
+  return (
+    <div className="rounded-md bg-ink px-3 py-2 shadow-lg">
+      {/* Date line — small and muted, like the plate's caption text. */}
+      <p className="whitespace-nowrap text-[11px] text-ink-soft">{formattedDate}</p>
+      {point.price != null ? (
+        <>
+          {/* The price is the loudest element, even inside a tooltip. */}
+          <p className="price-figure text-base font-extrabold text-white">
+            €{point.price.toFixed(2)}
+          </p>
+          {/* Which store held the cheapest price that day. */}
+          {point.store && <p className="text-[11px] text-ink-soft">{point.store}</p>}
+        </>
+      ) : (
+        // Gap day: every store was out of stock.
+        <p className="text-xs text-red-300">{unavailableLabel}</p>
+      )}
+    </div>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Component                                                                 */
@@ -297,31 +457,24 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
     [locale, axisFormatOpts]
   );
 
-  // --- Tooltip date formatter — always "d MMM" for full precision. -------
+  // --- Tooltip date formatter — full "d MMM yyyy" precision. --------------
   const tooltipDateFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }),
     [locale]
   );
 
-  // --- Custom tooltip driven by dot hover. --------------------------------
-  // Recharts' default tooltip uses nearest-x mouse tracking, which causes
-  // the tooltip to jump between endpoints on sparse charts when hovering
-  // empty space.  Instead, we bypass Recharts' <Tooltip> entirely and
-  // manage our own activeIndex + dot position state.  The tooltip only
-  // appears when the mouse is directly over a data dot's SVG circle.
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [activeDotPos, setActiveDotPos] = useState<{ cx: number; cy: number } | null>(null);
+  // --- Visible (non-null) prices drive the price scale, the header
+  //     figures, the delta and the lowest-price reference line. ------------
+  const visiblePrices = useMemo(
+    () => filtered.filter((p) => p.price !== null).map((p) => p.price!),
+    [filtered]
+  );
 
-  // Stable callbacks so the custom dot render doesn't cause re-renders.
-  const handleDotEnter = useCallback((index: number, cx: number, cy: number) => {
-    setActiveIndex(index);
-    setActiveDotPos({ cx, cy });
-  }, []);
-
-  const handleDotLeave = useCallback(() => {
-    setActiveIndex(null);
-    setActiveDotPos(null);
-  }, []);
+  // --- Hand-rolled Y scale: padded domain + nice round tick values. ------
+  const { domain: yDomain, ticks: yTicks, tickDecimals } = useMemo(
+    () => buildPriceScale(visiblePrices),
+    [visiblePrices]
+  );
 
   // --- Empty state: render nothing and let the parent handle it.
   //     This check is placed after all hooks so React's rules-of-hooks
@@ -332,19 +485,54 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
   //     the visible chart is a single dot or a flat line.  Based on the
   //     `filtered` array (not the full `points`) so the caption matches
   //     what the user actually sees in the selected range. ----------------
-  const nonNullPrices = filtered.filter((p) => p.price !== null).map((p) => p.price!);
   const isSparse =
     filtered.length === 1 ||
-    (nonNullPrices.length > 0 && new Set(nonNullPrices).size === 1);
+    (visiblePrices.length > 0 && new Set(visiblePrices).size === 1);
+
+  // --- Header figures: last visible price ("current") and the delta
+  //     against the first visible price of the selected window — the
+  //     current-vs-first movement a trader expects at a glance. ------------
+  const firstPrice = filtered.find((p) => p.price !== null)?.price ?? null;
+  const lastPrice =
+    [...filtered].reverse().find((p) => p.price !== null)?.price ?? null;
+
+  // Delta only makes sense with two distinct observations to compare.
+  const delta =
+    firstPrice !== null && lastPrice !== null && visiblePrices.length >= 2
+      ? lastPrice - firstPrice
+      : null;
+  const deltaPct = delta !== null && firstPrice ? (delta / firstPrice) * 100 : null;
+
+  // Buyer semantics, not trader semantics: a FALLING price is good news on
+  // a price-comparison site, so drops are green (stock token) and rises use
+  // the same red the page uses for out-of-stock. Flat stays muted.
+  const deltaColor =
+    delta === null || delta === 0
+      ? "text-mute"
+      : delta < 0
+        ? "text-stock"
+        : "text-red-600";
+
+  // Direction glyph: ▼ for a drop, ▲ for a rise, ± for no movement.
+  const deltaGlyph = delta === null || delta === 0 ? "±" : delta < 0 ? "▼" : "▲";
+
+  // --- Lowest visible price: drawn as a dashed teal reference line, the
+  //     quiet "historic low" marker. Skipped for flat series (the whole
+  //     line IS the low) and for very short histories (too little context).
+  const minPrice = visiblePrices.length > 0 ? Math.min(...visiblePrices) : null;
+  const showLowLine =
+    minPrice !== null && visiblePrices.length >= 3 && !isSparse;
+
+  // --- Observation dots: with daily data over months, dots on every point
+  //     read as noise, so they only appear on short histories where each
+  //     nightly observation deserves emphasis. ------------------------------
+  const showDots = visiblePrices.length <= 14;
 
   /** Format an epoch-ms timestamp for X-axis tick labels (span-aware). */
-  const formatTick = (ts: number) => {
-    const d = new Date(ts);
-    return axisDateFormatter.format(d);
-  };
+  const formatTick = (ts: number) => axisDateFormatter.format(new Date(ts));
 
-  /** Format Y-axis tick values as "€123". */
-  const formatPrice = (value: number) => `€${value}`;
+  /** Format Y-axis tick values as round euro levels ("€850" / "€8.50"). */
+  const formatPrice = (value: number) => `€${value.toFixed(tickDecimals)}`;
 
   // --- Range toggle button definitions. ----------------------------------
   const rangeButtons: { key: RangeKey; label: string }[] = [
@@ -357,200 +545,186 @@ export default function PriceHistoryChart({ points, locale, labels }: Props) {
 
   return (
     <div>
-      {/* Time-range toggle: a single segmented control matching the sort
-          control on category pages (one bordered box, hairline dividers). */}
-      <div className="mb-4 inline-flex divide-x divide-line overflow-hidden rounded-md border border-line bg-surface">
-        {rangeButtons.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setRange(key)}
-            className={`px-3 py-1.5 text-sm transition-colors ${
-              range === key
-                ? "bg-ink font-medium text-white"
-                : "text-mute hover:bg-page hover:text-ink"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* The whole chart lives on ONE white sheet: header strip on top,
+          plot area below. The plot wrapper has a FIXED height (280px) so
+          the lazy-loading placeholder can mirror it exactly and nothing
+          shifts when the Recharts chunk lands. */}
+      <div className="rounded-lg border border-line bg-surface">
+        {/* ------------------------------------------------------------------
+            Header strip: current price + range delta on the left, the
+            time-range segmented control on the right. flex-wrap stacks
+            them into two rows on narrow (375px) screens. */}
+        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-4 pt-4 sm:px-5">
+          <div>
+            {/* Current price: the last visible price of the selected window.
+                Set in the site's price voice — heading face, extrabold,
+                tabular figures — so it stays the loudest element. */}
+            {lastPrice !== null && (
+              <p className="price-figure text-2xl font-extrabold leading-8 text-ink">
+                €{lastPrice.toFixed(2)}
+              </p>
+            )}
+            {/* Delta vs the first price of the window: glyph + absolute
+                change + percentage. Green when the price dropped (good for
+                buyers), red when it rose, muted when flat. */}
+            {delta !== null && deltaPct !== null && (
+              <p className={`mt-0.5 text-xs font-medium tabular-nums ${deltaColor}`}>
+                <span aria-hidden="true">{deltaGlyph}</span> €
+                {Math.abs(delta).toFixed(2)} ({delta > 0 ? "+" : delta < 0 ? "-" : ""}
+                {Math.abs(deltaPct).toFixed(1)}%)
+              </p>
+            )}
+          </div>
 
-      {/* Chart wrapper — explicit height prevents ResponsiveContainer from
-          collapsing to 0px inside flex/grid parents (the most common
-          Recharts-in-Next rendering bug).  position:relative so the
-          custom tooltip can be absolutely positioned within it.
-          Rendered as a white sheet so the plot area matches the offers
-          ledger above it. */}
-      <div className="w-full h-[300px] relative rounded-lg border border-line bg-surface pt-4 pr-2">
-        {/* height=100% tracks the padded wrapper box (300px minus padding). */}
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
-          >
-            {/* Chart colors are hardcoded (documented token exception for
-                charts): grid/axis use the hairline and faint neutrals,
-                the line uses the brand teal. */}
-            <CartesianGrid strokeDasharray="3 3" stroke="#DDE4EB" />
+          {/* Time-range toggle: same segmented-control language as the sort
+              control on category pages (one bordered box, hairline
+              dividers), sized down to sit quietly in the card header. */}
+          <div className="inline-flex divide-x divide-line overflow-hidden rounded-md border border-line bg-surface">
+            {rangeButtons.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setRange(key)}
+                className={`px-2.5 py-1.5 text-xs transition-colors ${
+                  range === key
+                    ? "bg-ink font-medium text-white"
+                    : "text-mute hover:bg-page hover:text-ink"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            {/* X-axis: numeric time scale using epoch-ms timestamps.
-                We use type="number" with scale="time" instead of a
-                categorical string axis because Recharts' categorical axis
-                can only render ticks at values that exist as data points.
-                A numeric time axis accepts any tick position, so we can
-                place them on clean calendar boundaries (1st-of-month,
-                Jan-1, etc.) regardless of where data points fall.
-                domain is clamped to the data range; ticks are the
-                explicitly-generated calendar boundary timestamps. */}
-            <XAxis
-              dataKey="ts"
-              type="number"
-              scale="time"
-              domain={["dataMin", "dataMax"]}
-              ticks={axisTicks}
-              tickFormatter={formatTick}
-              tick={{ fontSize: 12, fill: "#7C8DA1" }}
-              stroke="#7C8DA1"
-            />
-
-            {/* Y-axis: prices in euros. Auto domain lets Recharts pick
-                sensible min/max from the data. */}
-            <YAxis
-              tickFormatter={formatPrice}
-              tick={{ fontSize: 12, fill: "#7C8DA1" }}
-              stroke="#7C8DA1"
-              domain={["auto", "auto"]}
-              width={60}
-            />
-
-            {/* No Recharts <Tooltip> — we render our own tooltip div below
-                the chart, positioned via stored dot coordinates.  This
-                completely bypasses Recharts' nearest-x mouse tracking so
-                the tooltip only appears when hovering directly over a
-                data dot's SVG circle. */}
-
-            {/* Price line: stepAfter matches the forward-fill semantics
-                (price holds until the next change). connectNulls=false so
-                all-unavailable gaps render as visible breaks.
-                isAnimationActive=false removes the entrance/hover
-                animation that feels laggy on sparse 2-point flat lines.
-                activeDot=false disables Recharts' own active-dot overlay
-                since our custom dot render handles hover styling. */}
-            <Line
-              type="stepAfter"
-              dataKey="price"
-              stroke="#0BA4B4"
-              strokeWidth={2.5}
-              connectNulls={false}
-              isAnimationActive={false}
-              activeDot={false}
-              dot={(dotProps: {
-                cx?: number;
-                cy?: number;
-                index?: number;
-                payload?: ChartPoint;
-              }) => {
-                const { cx, cy, index, payload } = dotProps;
-
-                // Guard: bail if Recharts didn't provide coordinates
-                // (shouldn't happen for rendered points, but satisfies
-                // the optional types in DotItemDotProps).
-                if (cx == null || cy == null || index == null || !payload) {
-                  return <g key="dot-missing" />;
-                }
-
-                // Skip rendering a dot for null-price (gap) points so
-                // unavailable days have nothing hoverable.
-                if (payload.price == null) {
-                  return <g key={`dot-gap-${index}`} />;
-                }
-
-                const isActive = activeIndex === index;
-
-                // Shared style to suppress the native browser focus
-                // outline and text-selection highlight that SVG elements
-                // can acquire on hover/click.
-                const noSelect = {
-                  outline: "none",
-                  userSelect: "none" as const,
-                  WebkitUserSelect: "none" as const,
-                };
-
-                return (
-                  <g
-                    key={`dot-${index}`}
-                    onMouseEnter={() => handleDotEnter(index, cx, cy)}
-                    onMouseLeave={handleDotLeave}
-                    style={noSelect}
-                  >
-                    {/* Invisible outer circle — larger hit target (r=12)
-                        so the user doesn't need pixel-perfect aim.
-                        pointerEvents="all" ensures it captures the mouse
-                        even though it is transparent. */}
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={12}
-                      fill="transparent"
-                      stroke="none"
-                      pointerEvents="all"
-                      style={{ ...noSelect, cursor: "pointer" }}
-                    />
-                    {/* Visible dot — grows from r=5 to r=7 on hover.
-                        pointerEvents="none" so mouse events pass through
-                        to the hit-target circle underneath, avoiding
-                        double-fire of enter/leave. */}
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={isActive ? 7 : 5}
-                      fill="#0BA4B4"
-                      stroke="none"
-                      pointerEvents="none"
-                      style={noSelect}
-                    />
-                  </g>
-                );
-              }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-
-        {/* Custom tooltip — rendered as an absolutely-positioned div
-            inside the chart wrapper.  Only visible when activeIndex is
-            set (i.e. the mouse is over a data dot).  Positioned near the
-            active dot using the stored cx/cy pixel coordinates, offset
-            upward so it floats above the dot. */}
-        {activeIndex !== null && activeDotPos && chartData[activeIndex] && (() => {
-          const point = chartData[activeIndex];
-          const d = new Date(point.date + "T00:00:00Z");
-          const formattedDate = tooltipDateFormatter.format(d);
-
-          return (
-            /* Tooltip as a miniature navy price plate, echoing the page's
-               main price treatment: white price on ink, muted meta lines. */
-            <div
-              className="absolute pointer-events-none bg-ink rounded-md shadow-lg px-3 py-2 text-sm z-10"
-              style={{
-                left: activeDotPos.cx,
-                top: activeDotPos.cy - 10,
-                transform: "translate(-50%, -100%)",
-              }}
+        {/* ------------------------------------------------------------------
+            Plot area. Fixed 280px height: prevents ResponsiveContainer from
+            collapsing to 0px inside flex/grid parents AND guarantees zero
+            layout shift against the lazy placeholder.
+            The arbitrary-variant class applies tabular figures to all SVG
+            axis labels so euro amounts align like everywhere else on site. */}
+        <div className="h-[280px] w-full pt-3 [&_.recharts-cartesian-axis-tick_text]:tabular-nums">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={chartData}
+              // left margin gives the first (edge-anchored) date label room;
+              // bottom margin keeps date labels off the card's rounded edge.
+              margin={{ top: 8, right: 0, bottom: 8, left: 14 }}
             >
-              <p className="text-xs text-ink-soft whitespace-nowrap">{formattedDate}</p>
-              {point.price != null ? (
-                <>
-                  <p className="price-figure font-bold text-white">
-                    €{point.price.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-ink-soft">{point.store}</p>
-                </>
-              ) : (
-                <p className="text-red-300">{labels.unavailable}</p>
+              {/* Gradient for the area fill: brand teal fading to fully
+                  transparent — gives the line "weight" the way Coinbase and
+                  Google Finance charts do, without a solid color block. */}
+              <defs>
+                <linearGradient id="priceHistoryFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={COLOR_BRAND} stopOpacity={0.16} />
+                  <stop offset="100%" stopColor={COLOR_BRAND} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+
+              {/* Gridlines: HORIZONTAL only, finely dashed hairlines — the
+                  ledger-rule motif. Vertical lines are off so the sheet
+                  reads as ruled paper, not a cage. */}
+              <CartesianGrid
+                horizontal
+                vertical={false}
+                stroke={COLOR_LINE}
+                strokeDasharray="3 5"
+              />
+
+              {/* X-axis: numeric time scale using epoch-ms timestamps.
+                  We use type="number" with scale="time" instead of a
+                  categorical string axis because Recharts' categorical axis
+                  can only render ticks at values that exist as data points.
+                  A numeric time axis accepts any tick position, so we can
+                  place them on clean calendar boundaries (1st-of-month,
+                  Jan-1, etc.) regardless of where data points fall.
+                  Axis line and tick marks are removed; the labels alone,
+                  small and faint, do the work. */}
+              <XAxis
+                dataKey="ts"
+                type="number"
+                scale="time"
+                domain={["dataMin", "dataMax"]}
+                ticks={axisTicks}
+                tickFormatter={formatTick}
+                tick={{ fontSize: 11, fill: COLOR_FAINT }}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+              />
+
+              {/* Y-axis: price levels on the RIGHT, the trading-chart
+                  convention (the newest data hugs the axis you read).
+                  Domain and ticks come from buildPriceScale so labels are
+                  always round euro levels, never €123.37 artifacts. */}
+              <YAxis
+                orientation="right"
+                domain={yDomain}
+                ticks={yTicks}
+                tickFormatter={formatPrice}
+                tick={{ fontSize: 11, fill: COLOR_FAINT }}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={6}
+                width={52}
+              />
+
+              {/* Hover layer: a dashed vertical crosshair (cursor) plus the
+                  navy mini-plate tooltip. Recharts snaps to the nearest
+                  point horizontally, which is exactly how finance charts
+                  behave when hovering between daily observations. */}
+              <Tooltip
+                cursor={{ stroke: COLOR_FAINT, strokeDasharray: "4 4", strokeWidth: 1 }}
+                isAnimationActive={false}
+                content={
+                  <PlateTooltip
+                    dateFormatter={tooltipDateFormatter}
+                    unavailableLabel={labels.unavailable}
+                  />
+                }
+              />
+
+              {/* Lowest-price reference: a dashed teal rule at the minimum
+                  visible price with a small price label above its left end.
+                  The quiet "this is the low" marker traders look for. */}
+              {showLowLine && (
+                <ReferenceLine
+                  y={minPrice!}
+                  stroke={COLOR_BRAND}
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.55}
+                  label={{
+                    value: `€${minPrice!.toFixed(2)}`,
+                    position: "insideBottomLeft",
+                    fill: COLOR_BRAND,
+                    fontSize: 10,
+                    dy: -4,
+                  }}
+                />
               )}
-            </div>
-          );
-        })()}
+
+              {/* Price series: stepAfter matches the forward-fill semantics
+                  (a price holds until the next change), and a step line
+                  makes sparse daily data look intentional instead of
+                  jagged. connectNulls=false so all-unavailable stretches
+                  render as visible breaks. isAnimationActive=false removes
+                  the entrance animation that feels laggy on sparse series.
+                  Dots mark individual nightly observations only on short
+                  histories (see showDots); the hover activeDot is a teal
+                  disc with a white ring, matching the crosshair. */}
+              <Area
+                type="stepAfter"
+                dataKey="price"
+                stroke={COLOR_BRAND}
+                strokeWidth={2}
+                fill="url(#priceHistoryFill)"
+                connectNulls={false}
+                isAnimationActive={false}
+                dot={showDots ? { r: 3, fill: COLOR_BRAND, strokeWidth: 0 } : false}
+                activeDot={{ r: 4.5, fill: COLOR_BRAND, stroke: "#FFFFFF", strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Sparse-data caption: shown when the chart is a single dot or a
