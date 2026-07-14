@@ -27,8 +27,8 @@ const about: Record<string, AboutPageContent> = {
   el: {
     title: "Πώς λειτουργεί το TimiCY",
     intro: [
-      "Το TimiCY συγκρίνει τιμές ηλεκτρονικών και οικιακών συσκευών από έξι καταστήματα της Κύπρου (iStorm, Kotsovolos, Stephanis, Electroline, Public και Bionic) σε 21 κατηγορίες προϊόντων.",
-      "Κάθε βράδυ, το σύστημά μας συλλέγει τις τρέχουσες τιμές και τη διαθεσιμότητα από τους ιστότοπους των καταστημάτων και τις αντιστοιχίζει ανά προϊόν, ώστε να βλέπεις με μια ματιά πού είναι φθηνότερο αυτό που ψάχνεις.",
+      "Το TimiCY συγκρίνει τιμές ηλεκτρονικών και οικιακών συσκευών από καταστήματα της Κύπρου που καλύπτει η υπηρεσία, σε ευρύ φάσμα κατηγοριών προϊόντων. Τα καταστήματα που καλύπτονται αυτή τη στιγμή εμφανίζονται παρακάτω.",
+      "Κάθε βράδυ, το σύστημά μας συλλέγει τις τρέχουσες τιμές και τη διαθεσιμότητα από τους ιστότοπους των καταστημάτων και τις αντιστοιχίζει ανά προϊόν, ώστε να βλέπεις με μια ματιά πού είναι φθηνότερο αυτό που ψάχνεις. Η αντιστοίχιση γίνεται αυτόματα και ενδέχεται περιστασιακά να περιέχει σφάλματα. Πριν από κάθε αγορά, επιβεβαίωσε τον ακριβή κωδικό μοντέλου, τα χαρακτηριστικά, την τιμή και τη διαθεσιμότητα στον ιστότοπο του καταστήματος.",
     ],
     stores: ["iStorm", "Kotsovolos", "Stephanis", "Electroline", "Public", "Bionic"],
     blocks: [
@@ -38,7 +38,7 @@ const about: Record<string, AboutPageContent> = {
       },
       {
         heading: "Ειδοποιήσεις τιμής",
-        body: "Σε κάθε σελίδα προϊόντος μπορείς να ορίσεις τιμή στόχο. Όταν κάποιο κατάστημα φτάσει ή πέσει κάτω από αυτήν, σου στέλνουμε email. Μπορείς να απεγγραφείς οποιαδήποτε στιγμή με ένα κλικ.",
+        body: "Σε κάθε σελίδα προϊόντος μπορείς να ορίσεις τιμή στόχο. Όταν, σε μία από τις ενημερώσεις μας, καταγραφεί σε κάποιο από τα καταστήματα που καλύπτουμε τιμή ίση ή χαμηλότερη από την τιμή στόχο σου, σου στέλνουμε email. Μπορείς να απεγγραφείς οποιαδήποτε στιγμή με ένα κλικ.",
       },
       {
         heading: "Σημείωση για τις τιμές",
@@ -50,8 +50,8 @@ const about: Record<string, AboutPageContent> = {
   en: {
     title: "How TimiCY works",
     intro: [
-      "TimiCY compares prices for electronics and home appliances from six stores in Cyprus (iStorm, Kotsovolos, Stephanis, Electroline, Public and Bionic) across 21 product categories.",
-      "Every night, our system collects current prices and availability from the stores' websites and matches them per product, so you can see at a glance where the item you want is cheapest.",
+      "TimiCY compares prices for electronics and home appliances from retailers in Cyprus covered by the service, across a wide range of product categories. The retailers currently covered are shown below.",
+      "Every night, our system collects current prices and availability from the stores' websites and matches them per product, so you can see at a glance where the item you want is cheapest. Matching is automated and may occasionally contain errors. Before purchasing, verify the exact model number, specifications, price and availability on the store's website.",
     ],
     stores: ["iStorm", "Kotsovolos", "Stephanis", "Electroline", "Public", "Bionic"],
     blocks: [
@@ -61,7 +61,7 @@ const about: Record<string, AboutPageContent> = {
       },
       {
         heading: "Price alerts",
-        body: "On every product page you can set a target price. When a store reaches or drops below it, we send you an email. You can unsubscribe at any time with a single click.",
+        body: "On every product page, you can set a target price. When one of our updates records a price at or below your target at one of the retailers we cover, we send you an email. You can unsubscribe at any time with a single click.",
       },
       {
         heading: "A note on prices",

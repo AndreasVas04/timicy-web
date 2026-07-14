@@ -14,7 +14,7 @@ import type { LegalPageContent } from "./privacy";
 const terms: Record<string, LegalPageContent> = {
   el: {
     title: "Όροι Χρήσης",
-    lastUpdated: "Τελευταία ενημέρωση: 8 Ιουλίου 2026",
+    lastUpdated: "Τελευταία ενημέρωση: 14 Ιουλίου 2026",
     sections: [
       {
         heading: "Η υπηρεσία",
@@ -29,9 +29,10 @@ const terms: Record<string, LegalPageContent> = {
         ],
       },
       {
-        heading: "Ακρίβεια τιμών",
+        heading: "Ακρίβεια πληροφοριών προϊόντων",
         paragraphs: [
-          "Καταβάλλουμε κάθε εύλογη προσπάθεια ώστε οι τιμές να είναι ακριβείς. Ωστόσο, οι τιμές και η διαθεσιμότητα αλλάζουν συνεχώς και ενδέχεται να διαφέρουν από αυτές που εμφανίζονται εδώ. Η τελική τιμή είναι πάντα αυτή που αναγράφεται στον ιστότοπο του καταστήματος τη στιγμή της αγοράς. Το TimiCY δεν φέρει ευθύνη για αποφάσεις αγοράς που βασίζονται στις πληροφορίες του ιστότοπου.",
+          "Καταβάλλουμε κάθε εύλογη προσπάθεια ώστε οι πληροφορίες να είναι ακριβείς. Ωστόσο, οι τιμές και η διαθεσιμότητα αλλάζουν συνεχώς και ενδέχεται να διαφέρουν από αυτές που εμφανίζονται εδώ. Η τελική τιμή είναι πάντα αυτή που αναγράφεται στον ιστότοπο του καταστήματος τη στιγμή της αγοράς.",
+          "Οι πληροφορίες προϊόντων συλλέγονται και αντιστοιχίζονται με αυτοματοποιημένα μέσα. Η αυτόματη αντιστοίχιση ενδέχεται περιστασιακά να είναι εσφαλμένη ή ελλιπής. Πριν από κάθε αγορά, επιβεβαίωσε τον ακριβή κωδικό μοντέλου, τα χαρακτηριστικά, την τιμή και τη διαθεσιμότητα στον ιστότοπο του καταστήματος. Μην βασίζεσαι αποκλειστικά στις πληροφορίες του TimiCY για να λάβεις απόφαση αγοράς.",
         ],
       },
       {
@@ -43,13 +44,13 @@ const terms: Record<string, LegalPageContent> = {
       {
         heading: "Πνευματική ιδιοκτησία",
         paragraphs: [
-          "Οι ονομασίες προϊόντων, τα εμπορικά σήματα και οι εικόνες προϊόντων ανήκουν στους κατόχους τους και στα αντίστοιχα καταστήματα. Εμφανίζονται εδώ αποκλειστικά για σκοπούς ταυτοποίησης και σύγκρισης.",
+          "Οι ονομασίες προϊόντων, τα εμπορικά σήματα και οι εικόνες προϊόντων ανήκουν στους αντίστοιχους δικαιούχους τους, συμπεριλαμβανομένων κατασκευαστών, καταστημάτων και άλλων τρίτων. Εμφανίζονται εδώ αποκλειστικά για σκοπούς ταυτοποίησης και σύγκρισης. Η εμφάνισή τους δεν υποδηλώνει χορηγία, έγκριση ή οποιαδήποτε σχέση συνεργασίας με το TimiCY. Αν είσαι δικαιούχος και θέλεις να ζητήσεις διόρθωση, αναφορά προέλευσης ή αφαίρεση περιεχομένου, γράψε μας στο contact@timicy.com και θα εξετάσουμε το αίτημα άμεσα.",
         ],
       },
       {
         heading: "Περιορισμός ευθύνης",
         paragraphs: [
-          "Η υπηρεσία παρέχεται \u00ABως έχει\u00BB, χωρίς εγγυήσεις διαθεσιμότητας ή πληρότητας. Στον μέγιστο βαθμό που επιτρέπει ο νόμος, δεν φέρουμε ευθύνη για ζημίες που απορρέουν από τη χρήση της υπηρεσίας.",
+          "Η υπηρεσία παρέχεται \u00ABως έχει\u00BB, χωρίς εγγυήσεις διαθεσιμότητας, ακρίβειας ή πληρότητας. Στον μέγιστο βαθμό που επιτρέπει το εφαρμοστέο δίκαιο, δεν φέρουμε ευθύνη για ζημίες που απορρέουν από τη χρήση της υπηρεσίας, συμπεριλαμβανομένων ιδίως ζημιών από παρωχημένες, ελλιπείς ή εσφαλμένα αντιστοιχισμένες πληροφορίες, από αλλαγές που πραγματοποιούν τα καταστήματα μετά την τελευταία ενημέρωσή μας ή από προσωρινή μη διαθεσιμότητα της υπηρεσίας. Τίποτα στους παρόντες όρους δεν αποκλείει ή περιορίζει ευθύνη που δεν μπορεί νομίμως να αποκλειστεί ή να περιοριστεί.",
         ],
       },
       {
@@ -62,7 +63,7 @@ const terms: Record<string, LegalPageContent> = {
   },
   en: {
     title: "Terms of Use",
-    lastUpdated: "Last updated: 8 July 2026",
+    lastUpdated: "Last updated: 14 July 2026",
     sections: [
       {
         heading: "The service",
@@ -77,9 +78,10 @@ const terms: Record<string, LegalPageContent> = {
         ],
       },
       {
-        heading: "Price accuracy",
+        heading: "Accuracy of product information",
         paragraphs: [
-          "We make every reasonable effort to keep prices accurate. However, prices and availability change constantly and may differ from what is shown here. The final price is always the one displayed on the store\u2019s website at the time of purchase. TimiCY accepts no responsibility for purchasing decisions based on the information on this website.",
+          "We make every reasonable effort to keep the information accurate. However, prices and availability change constantly and may differ from what is shown here. The final price is always the one displayed on the store\u2019s website at the time of purchase.",
+          "Product information is collected and matched by automated means. Automated product matching may occasionally be incorrect or incomplete. Before purchasing, verify the exact model number, specifications, price and availability on the store\u2019s website. Do not rely solely on information displayed by TimiCY when making a purchasing decision.",
         ],
       },
       {
@@ -91,13 +93,13 @@ const terms: Record<string, LegalPageContent> = {
       {
         heading: "Intellectual property",
         paragraphs: [
-          "Product names, trademarks and product images belong to their respective owners and stores. They appear here solely for identification and comparison purposes.",
+          "Product names, trademarks and product images belong to their respective rights holders, including manufacturers, retailers and other third parties. They appear here solely for identification and comparison purposes. Their appearance does not imply sponsorship, endorsement or any affiliation with TimiCY. If you are a rights holder and wish to request a correction, attribution or removal of content, write to us at contact@timicy.com and we will review the request promptly.",
         ],
       },
       {
         heading: "Limitation of liability",
         paragraphs: [
-          "The service is provided \u201Cas is\u201D, without guarantees of availability or completeness. To the maximum extent permitted by law, we accept no liability for damages arising from the use of the service.",
+          "The service is provided \u201Cas is\u201D, without guarantees of availability, accuracy or completeness. To the maximum extent permitted by applicable law, we accept no liability for losses arising from the use of the service, including, in particular, losses arising from outdated, incomplete or incorrectly matched information, changes made by retailers after our latest update, or temporary unavailability of the service. Nothing in these terms excludes or limits liability that cannot lawfully be excluded or limited.",
         ],
       },
       {
