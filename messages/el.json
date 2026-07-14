@@ -55,6 +55,7 @@
     "filterMin": "Από",
     "filterMax": "Έως",
     "filterApply": "Εφαρμογή",
+    "filterApplyCount": "Εφαρμογή ({count})",
     "filterClear": "Καθαρισμός",
     "filterAvailability": "Διαθεσιμότητα",
     "showUnavailable": "Εμφάνιση μη διαθέσιμων",

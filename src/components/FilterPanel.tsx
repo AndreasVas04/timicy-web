@@ -35,6 +35,7 @@ import {
   type FilterParams,
 } from "@/lib/filter-params";
 import type { PriceBounds } from "@/lib/queries/category";
+import { getFilterPreview } from "@/app/actions/filter-preview";
 
 /* -------------------------------------------------------------------------- */
 /*  Constants                                                                 */
@@ -56,6 +57,8 @@ type FilterLabels = {
   filterMin: string;
   filterMax: string;
   filterApply: string;
+  /** Label template with a "{count}" placeholder, e.g. "Apply ({count})". */
+  filterApplyCount: string;
   filterClear: string;
   filterAvailability: string;
   showUnavailable: string;
@@ -186,13 +189,41 @@ export function FilterPanel({
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  /* ---- Refs for focus management --------------------------------------- */
+  /* ---- Live filter preview state --------------------------------------- */
+
+  /** Live price bounds updated by the filter preview. Initialized from
+   *  the server-rendered priceBounds prop and refreshed when the user
+   *  changes brand selections (bounds are brands-only by design). All
+   *  slider and bound-equal logic reads this instead of the prop. */
+  const [liveBounds, setLiveBounds] = useState<PriceBounds>(priceBounds);
+
+  /** Live result count from the filter preview, or null when no preview
+   *  has been fetched yet. Shown on the Apply button when available. */
+  const [liveCount, setLiveCount] = useState<number | null>(null);
+
+  /* ---- Refs for focus management + preview dispatch ------------------- */
 
   /** The floating filter button; receives focus when the panel closes. */
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   /** The panel close button; receives focus when the panel opens. */
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  /** Monotonic counter for preview dispatches. Incremented on each
+   *  dispatch; stale responses (where the response seq < current seq)
+   *  are silently discarded. */
+  const seqRef = useRef(0);
+
+  /** Serialized key of the last dispatched preview request. Used to
+   *  skip redundant dispatches when the pending state hasn't changed. */
+  const lastDispatchedKeyRef = useRef<string | null>(null);
+
+  /** Serialized brands part of the last dispatched preview. Used to
+   *  determine whether bounds need refreshing (brands-only semantics). */
+  const lastDispatchedBrandsRef = useRef<string | null>(null);
+
+  /** Timer handle for the trailing debounce on preview dispatches. */
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ---- Panel open/close ------------------------------------------------ */
 
@@ -255,7 +286,19 @@ export function FilterPanel({
       max: filters.max !== null ? String(filters.max) : "",
       stock: filters.stock,
     });
+    // Reset preview state: liveBounds back to the prop, count cleared.
+    // This covers back/forward, Clear, and post-Apply navigation.
+    setLiveBounds(priceBounds);
+    setLiveCount(null);
   }
+
+  // Reset dispatch-tracking refs when the applied filters change.
+  // Refs cannot be updated during render (react-hooks/refs), so
+  // this runs as a post-render effect keyed on the applied key.
+  useEffect(() => {
+    lastDispatchedKeyRef.current = null;
+    lastDispatchedBrandsRef.current = null;
+  }, [currentAppliedKey]);
 
   /* ---- Derived values --------------------------------------------------- */
 
@@ -285,9 +328,10 @@ export function FilterPanel({
   /** Adaptive step so the slider snaps to round, useful filter values
    *  (e.g. €2350 not €2347). Exact values are still reachable via the
    *  text inputs, which remain authoritative. ≤500→1, ≤2000→5, >2000→10.
-   *  Computed first because the endpoints are rounded to step multiples. */
-  const rawMin = priceBounds.min != null ? Math.floor(priceBounds.min) : 0;
-  const rawMax = priceBounds.max != null ? Math.ceil(priceBounds.max) : 0;
+   *  Computed first because the endpoints are rounded to step multiples.
+   *  Reads liveBounds (updated by filter preview) instead of the prop. */
+  const rawMin = liveBounds.min != null ? Math.floor(liveBounds.min) : 0;
+  const rawMax = liveBounds.max != null ? Math.ceil(liveBounds.max) : 0;
   const rawRange = rawMax - rawMin;
   const sliderStep =
     rawRange <= 500 ? 1 : rawRange <= 2000 ? 5 : 10;
@@ -338,6 +382,70 @@ export function FilterPanel({
     effectiveMin !== filters.min ||
     effectiveMax !== filters.max ||
     pending.stock !== filters.stock;
+
+  /* ---- Filter preview dispatch ----------------------------------------- */
+
+  // Serialized key capturing the full pending filter state. Used to
+  // detect changes and dedupe dispatches.
+  const pendingBrandsKey = [...pending.brands].sort().join(",");
+  const pendingKey = [pendingBrandsKey, effectiveMin, effectiveMax, pending.stock].join("|");
+
+  useEffect(() => {
+    // No requests when the panel is untouched: preserves zero-cost
+    // default path (no server action call on initial render).
+    if (!isDirty) {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      return;
+    }
+
+    // Dedupe: skip if the serialized key matches the last dispatch.
+    if (pendingKey === lastDispatchedKeyRef.current) return;
+
+    // Clear any previously queued timer before setting a new one.
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    // Trailing 300ms debounce: avoids flooding the server while the
+    // user types prices or toggles brands in quick succession.
+    debounceRef.current = setTimeout(() => {
+      const seq = ++seqRef.current;
+
+      // Determine whether bounds need refreshing. Bounds are brands-only
+      // by design, so we skip the bounds query when brands haven't
+      // changed since the last dispatch.
+      const skipBounds = pendingBrandsKey === lastDispatchedBrandsRef.current;
+
+      // Record what we dispatched so subsequent renders can dedupe.
+      lastDispatchedKeyRef.current = pendingKey;
+      lastDispatchedBrandsRef.current = pendingBrandsKey;
+
+      getFilterPreview({
+        category,
+        brands: [...pending.brands],
+        min: effectiveMin,
+        max: effectiveMax,
+        stock: pending.stock,
+        skipBounds,
+      }).then((result) => {
+        // Stale-response guard: only apply if this is still the most
+        // recent dispatch. Older responses are silently discarded.
+        if (seq !== seqRef.current) return;
+
+        // On error, keep previous values silently (no jitter).
+        if ("error" in result && result.error) return;
+
+        setLiveCount(result.count);
+        if (result.bounds !== null && result.bounds !== undefined) {
+          setLiveBounds(result.bounds);
+        }
+      });
+    }, 300);
+
+    // Cleanup: cancel the pending timer if the effect re-fires or
+    // the component unmounts.
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [pendingKey, isDirty, category, effectiveMin, effectiveMax, pending.brands, pending.stock, pendingBrandsKey]);
 
   /* ---- Navigation helpers ----------------------------------------------- */
 
@@ -890,7 +998,11 @@ export function FilterPanel({
         </button>
 
         {/* Apply: commits all pending filters in one navigation.
-            Disabled when the pending state matches the applied filters. */}
+            Disabled when the pending state matches the applied filters.
+            When a live preview count is available and the panel is dirty,
+            show the count-templated label (e.g. "Apply (42)"); otherwise
+            show the plain label. No spinner or layout shift while a
+            preview is in flight. */}
         <button
           type="button"
           onClick={handleApply}
@@ -904,7 +1016,9 @@ export function FilterPanel({
                         : "bg-line text-faint cursor-not-allowed"
                       }`}
         >
-          {labels.filterApply}
+          {isDirty && liveCount !== null
+            ? labels.filterApplyCount.replace("{count}", String(liveCount))
+            : labels.filterApply}
         </button>
       </div>
     );

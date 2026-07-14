@@ -55,6 +55,7 @@
     "filterMin": "From",
     "filterMax": "To",
     "filterApply": "Apply",
+    "filterApplyCount": "Apply ({count})",
     "filterClear": "Clear",
     "filterAvailability": "Availability",
     "showUnavailable": "Show unavailable",

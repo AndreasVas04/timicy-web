@@ -247,6 +247,10 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     filterMin: t("filterMin"),
     filterMax: t("filterMax"),
     filterApply: t("filterApply"),
+    // t.raw: the {count} placeholder is interpolated client-side by
+    // FilterPanel, not by next-intl; t() without values would log an
+    // IntlError on every SSG render.
+    filterApplyCount: t.raw("filterApplyCount"),
     filterClear: t("filterClear"),
     filterAvailability: t("filterAvailability"),
     showUnavailable: t("showUnavailable"),

@@ -37,6 +37,81 @@ type CategoryProductResult = {
   total: number;
 };
 
+/* -------------------------------------------------------------------------- */
+/*  Shared predicate helpers                                                   */
+/*  Extracted from queryCategoryProducts so the same filtering logic can be    */
+/*  reused by the lightweight filter-preview count query without duplicating   */
+/*  predicate application.                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Resolve brand filter slugs to canonical database values.
+ *
+ * Fetches the cached brand list for the category, builds a slug lookup map,
+ * and maps each slug in the filter to its canonical value. Slugs that don't
+ * resolve are silently dropped (existing convention). Returns null when no
+ * brand filter is present or when none of the requested slugs resolved.
+ */
+async function resolveBrandSlugs(
+  category: string,
+  filters?: FilterParams,
+): Promise<string[] | null> {
+  if (!filters || filters.brands.length === 0) return null;
+
+  const allBrands = await getCategoryBrands(category);
+  const slugMap = buildSlugMap(allBrands);
+  const resolved = filters.brands
+    .map((slug) => slugMap.get(slug))
+    .filter((v): v is string => v != null);
+
+  return resolved.length > 0 ? resolved : null;
+}
+
+/**
+ * Apply the shared listing predicates to a Supabase query builder.
+ *
+ * Adds the category equality check, the availability baseline (in-stock
+ * only unless stock==="all"), the brand inclusion filter (when resolved
+ * slugs are present), and the min/max price range predicates. This is
+ * pure predicate application with no sort, range, or select decisions,
+ * so it can be shared between the full product query and the head-only
+ * count query used by the filter preview.
+ */
+function applyListingPredicates(
+  // Supabase query builder generics vary by select shape; a concrete
+  // type would require duplicating this function for each call site.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query: any,
+  args: {
+    category: string;
+    filters?: FilterParams;
+    resolvedBrands: string[] | null;
+  },
+) {
+  query = query.eq("category", args.category);
+
+  // Availability baseline: only show products with buyable offers unless
+  // the user explicitly opted into seeing everything (stock=all).
+  if (!args.filters || args.filters.stock === "in") {
+    query = query.eq("has_available_offer", true);
+  }
+
+  // Brand filter: narrow to the resolved canonical brand names.
+  if (args.resolvedBrands) {
+    query = query.in("brand", args.resolvedBrands);
+  }
+
+  // Price range predicates on the product's cheapest-offer column.
+  if (args.filters?.min != null) {
+    query = query.gte("min_price", args.filters.min);
+  }
+  if (args.filters?.max != null) {
+    query = query.lte("min_price", args.filters.max);
+  }
+
+  return query;
+}
+
 /**
  * Raw, uncached category product query — the single home of all category
  * listing query logic including optional filter application.
@@ -74,53 +149,21 @@ export async function queryCategoryProducts({
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  let query = supabase
-    .from("products")
-    .select(
-      "id, canonical_title, brand, image_url, min_price, max_price, offer_count, store_count, has_available_offer",
-      { count: "exact" }
-    )
-    .eq("category", category);
+  // Resolve brand slugs once; the result feeds both the predicate
+  // helper and is not needed again.
+  const resolvedBrands = await resolveBrandSlugs(category, filters);
 
-  // --- Availability baseline ---
-  // By default, only products with at least one available offer are
-  // shown. Fully-unavailable products are hidden because their prices
-  // freeze at the last scraped value and can carry stale/wrong data.
-  // The ?stock=all URL param reveals them for users who explicitly want
-  // to see everything; product pages remain reachable via direct link
-  // regardless of this filter.
-  if (!filters || filters.stock === "in") {
-    query = query.eq("has_available_offer", true);
-  }
-
-  // --- Brand filter ---
-  // Resolve URL slugs to canonical database values via the category's
-  // brand list. Slugs that don't resolve are silently dropped.
-  if (filters && filters.brands.length > 0) {
-    const allBrands = await getCategoryBrands(category);
-    const slugMap = buildSlugMap(allBrands);
-    const resolved = filters.brands
-      .map((slug) => slugMap.get(slug))
-      .filter((v): v is string => v != null);
-
-    // Only apply the brand predicate if at least one slug resolved.
-    // If none resolved, the filter is ignored (shows all brands).
-    if (resolved.length > 0) {
-      query = query.in("brand", resolved);
-    }
-  }
-
-  // --- Price filter ---
-  // V1 filters on min_price (the product's cheapest offer price). This
-  // is honest on top of the availability default and will switch to a
-  // writer-computed min_available_price column in a later step (single-
-  // line change here).
-  if (filters?.min != null) {
-    query = query.gte("min_price", filters.min);
-  }
-  if (filters?.max != null) {
-    query = query.lte("min_price", filters.max);
-  }
+  // Build the base query with shared listing predicates (category,
+  // availability, brands, price range).
+  let query = applyListingPredicates(
+    supabase
+      .from("products")
+      .select(
+        "id, canonical_title, brand, image_url, min_price, max_price, offer_count, store_count, has_available_offer",
+        { count: "exact" }
+      ),
+    { category, filters, resolvedBrands },
+  );
 
   // Apply sort order based on the requested key.
   //
@@ -173,6 +216,69 @@ export async function queryCategoryProducts({
     rows: data ?? [],
     total: count ?? 0,
   };
+}
+
+/**
+ * Lightweight filter-preview query: returns the total matching product
+ * count and optionally refreshed price bounds for a given filter state.
+ *
+ * Used exclusively by the interactive filter-preview server action so
+ * the Apply button can show a live result count while the user adjusts
+ * filters. The default (unfiltered) category path never calls this.
+ *
+ * Count query uses head:true (zero rows transferred, count-only via the
+ * Content-Range header). Bounds reuse queryCategoryPriceBounds which
+ * intentionally ignores price and stock filters (brands-only semantics)
+ * so the slider always reflects the full available range for the
+ * selected brands.
+ *
+ * Count and bounds run concurrently via Promise.all. On any query
+ * error the function fails soft (returns count 0, bounds null),
+ * matching the file's existing error-handling convention.
+ */
+export async function queryCategoryFilterPreview({
+  category,
+  filters,
+  skipBounds,
+}: {
+  category: string;
+  filters: FilterParams;
+  skipBounds?: boolean;
+}): Promise<{ count: number; bounds: PriceBounds | null }> {
+  try {
+    const resolvedBrands = await resolveBrandSlugs(category, filters);
+
+    // Count-only query: select a minimal column with head:true so
+    // PostgREST returns only the count header, zero rows over the wire.
+    const countPromise = (async () => {
+      const supabase = createAnonClient();
+      const query = applyListingPredicates(
+        supabase
+          .from("products")
+          .select("id", { count: "exact", head: true }),
+        { category, filters, resolvedBrands },
+      );
+      const { count, error } = await query;
+      if (error) {
+        console.error("Filter preview count failed:", error.message);
+        return 0;
+      }
+      return count ?? 0;
+    })();
+
+    // Bounds query: reuse the existing brands-only price bounds query.
+    // Skipped when the caller knows brands haven't changed (the bounds
+    // would be identical to the previous response).
+    const boundsPromise = skipBounds
+      ? Promise.resolve(null)
+      : queryCategoryPriceBounds({ category, filters });
+
+    const [count, bounds] = await Promise.all([countPromise, boundsPromise]);
+    return { count, bounds };
+  } catch (err) {
+    console.error("Filter preview failed:", err);
+    return { count: 0, bounds: null };
+  }
 }
 
 /**
