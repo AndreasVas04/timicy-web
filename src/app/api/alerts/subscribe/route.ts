@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateToken } from "@/lib/tokens";
 import { sendActivationEmail } from "@/lib/email/resend";
+import { SITE_URL } from "@/lib/site-url";
 
 /* -------------------------------------------------------------------------- */
 /*  In-memory per-IP rate limiter (V1)                                        */
@@ -222,14 +223,8 @@ export async function POST(request: NextRequest) {
     }
 
     /* --- Build the unsubscribe URL -------------------------------------- */
-    // No confirmUrl needed — single opt-in means no confirmation step.
-    const appUrl = (
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.APP_URL ||
-      "http://localhost:3000"
-    ).replace(/\/+$/, ""); // Strip trailing slashes
-
-    const unsubscribeUrl = `${appUrl}/${locale}/alerts/unsubscribe?token=${unsubscribeToken}`;
+    // Uses SITE_URL (validated at module load, no localhost fallback).
+    const unsubscribeUrl = `${SITE_URL}/${locale}/alerts/unsubscribe?token=${unsubscribeToken}`;
 
     /* --- Send the activation email -------------------------------------- */
     // Informs the user their alert is now active and includes an unsubscribe link.

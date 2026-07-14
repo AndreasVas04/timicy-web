@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPriceAlertEmail } from "@/lib/email/resend";
+import { SITE_URL } from "@/lib/site-url";
 import { buildProductSlug } from "@/lib/slug";
 
 /**
@@ -237,12 +238,9 @@ export async function POST(request: NextRequest) {
     // For each due subscription where the current lowest price meets the
     // user's target, send an email. Stop after SEND_CAP sends.
 
-    // Base URL for building product and unsubscribe links
-    const appUrl = (
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.APP_URL ||
-      "http://localhost:3000"
-    ).replace(/\/+$/, "");
+    // Base URL for building product and unsubscribe links.
+    // Uses SITE_URL (validated at module load, no localhost fallback).
+    const appUrl = SITE_URL;
 
     // Filter subscriptions to only those where price target is met
     const matched = allDue.filter((sub) => {
