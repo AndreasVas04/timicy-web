@@ -174,31 +174,36 @@ export async function queryCategoryProducts({
   // already have has_available_offer = true).
   switch (sort) {
     case "price_asc":
-      // Buyable first, then cheapest first; nulls go to the end.
+      // Buyable first, then cheapest first; nulls go to the end. Id last so
+      // pages never repeat or skip products with equal prices.
       query = query
         .order("has_available_offer", { ascending: false })
         .order("min_price", {
           ascending: true,
           nullsFirst: false,
-        });
+        })
+        .order("id", { ascending: true });
       break;
     case "price_desc":
-      // Buyable first, then most expensive first; nulls go to the end.
+      // Buyable first, then most expensive first; nulls go to the end. Id
+      // last so pages never repeat or skip products with equal prices.
       query = query
         .order("has_available_offer", { ascending: false })
         .order("min_price", {
           ascending: false,
           nullsFirst: false,
-        });
+        })
+        .order("id", { ascending: true });
       break;
     case "popular":
     default:
-      // Buyable first, then most offers (proxy for popularity),
-      // then cheapest among ties.
+      // Buyable first, then the products carried by the most stores,
+      // then cheapest among ties, then id so pagination is stable.
       query = query
         .order("has_available_offer", { ascending: false })
-        .order("offer_count", { ascending: false })
-        .order("min_price", { ascending: true, nullsFirst: false });
+        .order("store_count", { ascending: false })
+        .order("min_price", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
       break;
   }
 
@@ -326,7 +331,7 @@ export const getCategoryProducts = unstable_cache(
  * Used to build the slug-to-canonical map for brand filter resolution
  * and to populate the brand checkbox list in the filter panel. The
  * product count serves as the popularity proxy (same spirit as the
- * offer_count popular sort on the product grid), so the first brands
+ * store_count popular sort on the product grid), so the first brands
  * shown before the show-more expander are the ones users most likely
  * want to filter by.
  *
