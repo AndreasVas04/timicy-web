@@ -34,7 +34,7 @@
   },
   "category": {
     "sortLabel": "Ταξινόμηση",
-    "sortPopular": "Δημοφιλή",
+    "sortPopular": "Προτεινόμενα",
     "sortPriceAsc": "Φθηνότερα πρώτα",
     "sortPriceDesc": "Ακριβότερα πρώτα",
     "fromPrice": "από {price}",
