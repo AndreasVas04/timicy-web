@@ -14,6 +14,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { buildProductSlug } from "@/lib/slug";
+import { decodeEntities } from "@/lib/decode-entities";
 
 /** Shape of a single search result from the API. */
 interface SearchResult {
@@ -308,7 +309,7 @@ export function SearchAutocomplete({
                   {/* Product info */}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-ink">
-                      {result.canonical_title}
+                      {decodeEntities(result.canonical_title)}
                     </p>
                     <p className="text-xs text-mute">{result.brand}</p>
                   </div>
